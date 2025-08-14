@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getEvent, updateEvent, deleteEvent } from '@/lib/db-memory'
+import { getEvent, updateEvent, deleteEvent } from '@/lib/supabase'
 import jwt from 'jsonwebtoken'
 
 const verifyAdmin = (request: NextRequest) => {
@@ -28,7 +28,7 @@ export async function GET(
   const { id } = await params
 
   try {
-    const event = getEvent(id)
+    const event = await getEvent(id)
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
@@ -55,7 +55,7 @@ export async function PATCH(
 
   try {
     const body = await request.json()
-    const updatedEvent = updateEvent(id, body)
+    const updatedEvent = await updateEvent(id, body)
     if (!updatedEvent) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
@@ -81,7 +81,7 @@ export async function DELETE(
   const { id } = await params
 
   try {
-    deleteEvent(id)
+    await deleteEvent(id)
     return NextResponse.json({ message: 'Event deleted successfully' })
   } catch (error) {
     console.error('Failed to delete event:', error)

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getArticle, updateArticle, deleteArticle } from '@/lib/db-memory'
+import { getArticle, updateArticle, deleteArticle } from '@/lib/supabase'
 import jwt from 'jsonwebtoken'
 
 const verifyAdmin = (request: NextRequest) => {
@@ -28,7 +28,7 @@ export async function GET(
   const { id } = await params
 
   try {
-    const article = getArticle(id)
+    const article = await getArticle(id)
     if (!article) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 })
     }
@@ -55,7 +55,7 @@ export async function PATCH(
 
   try {
     const body = await request.json()
-    const updatedArticle = updateArticle(id, body)
+    const updatedArticle = await updateArticle(id, body)
     if (!updatedArticle) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 })
     }
@@ -81,7 +81,7 @@ export async function DELETE(
   const { id } = await params
 
   try {
-    deleteArticle(id)
+    await deleteArticle(id)
     return NextResponse.json({ message: 'Article deleted successfully' })
   } catch (error) {
     console.error('Failed to delete article:', error)

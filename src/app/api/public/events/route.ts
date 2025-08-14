@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server'
-import { getEvents } from '@/lib/db-memory'
+import { getEvents } from '@/lib/supabase'
 
 export async function GET() {
   try {
-    const events = getEvents()
+    // Get published events from Supabase
+    const events = await getEvents(true)
     
-    // Filter to only return published events
-    const publishedEvents = events.filter((e: any) => e.isPublished)
-    
-    // Sort by date
-    const sortedEvents = publishedEvents.sort((a: any, b: any) => {
+    // Sort by date (already sorted by Supabase, but ensure correct order)
+    const sortedEvents = events.sort((a: any, b: any) => {
       const dateA = new Date(`${a.date} ${a.time}`)
       const dateB = new Date(`${b.date} ${b.time}`)
       return dateA.getTime() - dateB.getTime()

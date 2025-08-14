@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPageContent, updatePageContent } from '@/lib/db-memory'
+import { getPageContent, updatePageContent } from '@/lib/supabase'
 import jwt from 'jsonwebtoken'
 
 const verifyAdmin = (request: NextRequest) => {
@@ -28,7 +28,7 @@ export async function GET(
   const { page } = await params
 
   try {
-    const content = getPageContent(page)
+    const content = await getPageContent(page)
     return NextResponse.json({ content })
   } catch (error) {
     console.error('Failed to fetch page content:', error)
@@ -52,7 +52,7 @@ export async function PUT(
 
   try {
     const body = await request.json()
-    const updatedContent = updatePageContent(page, body.content)
+    const updatedContent = await updatePageContent(page, body.content)
     return NextResponse.json({ content: updatedContent })
   } catch (error) {
     console.error('Failed to update page content:', error)

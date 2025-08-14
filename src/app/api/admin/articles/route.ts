@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getArticles, createArticle } from '@/lib/db-memory'
+import { getArticles, createArticle } from '@/lib/supabase'
 import jwt from 'jsonwebtoken'
 
 const verifyAdmin = (request: NextRequest) => {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const articles = getArticles()
+    const articles = await getArticles()
     return NextResponse.json({ articles })
   } catch (error) {
     console.error('Failed to fetch articles:', error)
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const newArticle = createArticle(body)
+    const newArticle = await createArticle(body)
     return NextResponse.json({ article: newArticle })
   } catch (error) {
     console.error('Failed to create article:', error)

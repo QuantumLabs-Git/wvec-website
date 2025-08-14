@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getEvents, createEvent } from '@/lib/db-memory'
+import { getEvents, createEvent } from '@/lib/supabase'
 import jwt from 'jsonwebtoken'
 
 // Middleware to verify admin token
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const events = getEvents()
+    const events = await getEvents()
     return NextResponse.json({ events })
   } catch (error) {
     console.error('Failed to fetch events:', error)
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const newEvent = createEvent(body)
+    const newEvent = await createEvent(body)
     return NextResponse.json({ event: newEvent })
   } catch (error) {
     console.error('Failed to create event:', error)
