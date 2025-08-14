@@ -1,20 +1,27 @@
 'use client'
 
+import React from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BookOpen, Calendar, User } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export default function WrittenSermonPage({ params }: PageProps) {
+  const [slug, setSlug] = React.useState<string>('')
+  
+  React.useEffect(() => {
+    params.then(p => setSlug(p.slug))
+  }, [])
+  
   // This is a placeholder - in production, you would fetch the sermon data
   const sermon = {
-    id: params.slug,
+    id: slug,
     title: 'Sermon Title',
     speaker: 'Pastor',
     date: new Date().toISOString().split('T')[0],

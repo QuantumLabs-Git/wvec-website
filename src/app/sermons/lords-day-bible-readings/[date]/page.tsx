@@ -1,21 +1,28 @@
 'use client'
 
+import React from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Book, Calendar, FileText, Download, Printer } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     date: string
-  }
+  }>
 }
 
 export default function LordsDayReadingPage({ params }: PageProps) {
+  const [date, setDate] = React.useState<string>('')
+  
+  React.useEffect(() => {
+    params.then(p => setDate(p.date))
+  }, [])
+  
   // This is a placeholder - in production, you would fetch the reading data
   const reading = {
-    date: params.date,
-    title: `Lord's Day Bible Reading - ${params.date}`,
+    date: date,
+    title: `Lord's Day Bible Reading - ${date}`,
     morningReading: 'Morning Scripture Reference',
     morningChapter: 'Morning Chapter Title',
     morningText: 'The morning reading text will be displayed here...',
