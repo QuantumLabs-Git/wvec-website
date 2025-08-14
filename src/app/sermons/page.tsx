@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Mic, BookOpen, Bible } from 'lucide-react'
+import { Mic, BookOpen, Book } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -24,7 +24,7 @@ export default function SermonsPage() {
     {
       title: "Lord's Day Bible Readings",
       description: 'Weekly scripture readings for the Lord\'s Day',
-      icon: Bible,
+      icon: Book,
       href: '/sermons/lords-day-bible-readings',
       color: 'from-champagne/20 to-sage/20',
     },

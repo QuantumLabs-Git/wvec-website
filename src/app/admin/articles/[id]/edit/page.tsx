@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, FileText, Tag, User, Image, Save, Bold, Italic, List, Link2, Quote } from 'lucide-react'
 
-export default function EditArticlePage({ params }: { params: { id: string } }) {
+export default function EditArticlePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(true)
+  const [articleId, setArticleId] = useState<string>('')
   const [formData, setFormData] = useState({
     title: '',
     excerpt: '',
@@ -21,13 +22,16 @@ export default function EditArticlePage({ params }: { params: { id: string } }) 
   })
 
   useEffect(() => {
-    fetchArticle()
-  }, [params.id])
+    params.then((resolvedParams) => {
+      setArticleId(resolvedParams.id)
+      fetchArticle(resolvedParams.id)
+    })
+  }, [])
 
-  const fetchArticle = async () => {
+  const fetchArticle = async (id: string) => {
     try {
       const token = localStorage.getItem('admin_token')
-      const response = await fetch(`/api/admin/articles/${params.id}`, {
+      const response = await fetch(`/api/admin/articles/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -65,7 +69,7 @@ export default function EditArticlePage({ params }: { params: { id: string } }) 
 
     try {
       const token = localStorage.getItem('admin_token')
-      const response = await fetch(`/api/admin/articles/${params.id}`, {
+      const response = await fetch(`/api/admin/articles/${articleId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
