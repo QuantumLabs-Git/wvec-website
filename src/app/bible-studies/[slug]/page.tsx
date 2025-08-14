@@ -1,8 +1,8 @@
-import { motion } from 'framer-motion'
 import { Calendar, BookOpen, ArrowLeft, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { migratedBibleStudies, getBibleStudiesByCategory } from '@/lib/content-migration'
+import { MotionDiv } from '@/components/MotionWrapper'
 
 interface PageProps {
   params: {
@@ -31,7 +31,7 @@ export default function BibleStudyPage({ params }: PageProps) {
       {/* Header */}
       <section className="bg-gradient-to-b from-ivory to-white py-16">
         <div className="max-w-4xl mx-auto px-4">
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -73,14 +73,14 @@ export default function BibleStudyPage({ params }: PageProps) {
                 {study.description}
               </p>
             )}
-          </motion.div>
+          </MotionDiv>
         </div>
       </section>
 
       {/* Content */}
       <section className="py-16">
         <div className="max-w-4xl mx-auto px-4">
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -176,7 +176,7 @@ export default function BibleStudyPage({ params }: PageProps) {
                 </div>
               </div>
             )}
-          </motion.div>
+          </MotionDiv>
         </div>
       </section>
     </div>
