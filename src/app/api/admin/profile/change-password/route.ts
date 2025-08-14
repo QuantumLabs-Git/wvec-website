@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
 
     // Get current password hash (in production, from database)
     const storedPasswords = global.adminPasswords || {}
-    const defaultHash = await bcrypt.hash(process.env.DEFAULT_ADMIN_PASSWORD || 'Password123', 10)
+    // Use the same pre-hashed password for consistency
+    const defaultHash = '$2b$10$/ROqrT4E57F010O9Ag01ZeKEF6jeF.98J72NXEkOtrZ9VL9jwSKQ2'
     const currentHash = storedPasswords[decoded.email] || defaultHash
 
     // Verify current password

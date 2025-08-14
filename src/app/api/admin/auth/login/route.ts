@@ -10,17 +10,17 @@ const getUserByEmail = async (email: string) => {
     return null
   }
 
-  // For demo purposes, we'll use a default password
-  // In production, this should be stored in a database
-  const hashedPassword = await bcrypt.hash(process.env.DEFAULT_ADMIN_PASSWORD || 'Password123', 10)
-  
   // Check if user has a stored password (would be in database)
   const storedPasswords = global.adminPasswords || {}
+  
+  // For the default password, we'll use a pre-hashed version of "Password123"
+  // This hash is for "Password123"
+  const defaultPasswordHash = '$2b$10$/ROqrT4E57F010O9Ag01ZeKEF6jeF.98J72NXEkOtrZ9VL9jwSKQ2'
   
   return {
     id: email,
     email,
-    password: storedPasswords[email] || hashedPassword
+    password: storedPasswords[email] || defaultPasswordHash
   }
 }
 
