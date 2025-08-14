@@ -18,15 +18,17 @@ const verifyAdmin = (request: NextRequest) => {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { page: string } }
+  { params }: { params: Promise<{ page: string }> }
 ) {
   const user = verifyAdmin(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { page } = await params
+
   try {
-    const content = getPageContent(params.page)
+    const content = getPageContent(page)
     return NextResponse.json({ content })
   } catch (error) {
     console.error('Failed to fetch page content:', error)
@@ -39,16 +41,18 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { page: string } }
+  { params }: { params: Promise<{ page: string }> }
 ) {
   const user = verifyAdmin(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { page } = await params
+
   try {
     const body = await request.json()
-    const updatedContent = updatePageContent(params.page, body.content)
+    const updatedContent = updatePageContent(page, body.content)
     return NextResponse.json({ content: updatedContent })
   } catch (error) {
     console.error('Failed to update page content:', error)
