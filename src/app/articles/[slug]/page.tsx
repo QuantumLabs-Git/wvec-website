@@ -5,16 +5,18 @@ import { migratedArticles } from '@/lib/content-migration'
 import { MotionDiv } from '@/components/MotionWrapper'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
-export default function ArticlePage({ params }: PageProps) {
+export default async function ArticlePage({ params }: PageProps) {
+  const { slug } = await params
+  
   // Find the article by matching the href
   const article = migratedArticles.find(a => 
-    a.href === `/articles/${params.slug}` || 
-    a.id === params.slug
+    a.href === `/articles/${slug}` || 
+    a.id === slug
   )
 
   if (!article) {

@@ -5,16 +5,18 @@ import { migratedBibleStudies, getBibleStudiesByCategory } from '@/lib/content-m
 import { MotionDiv } from '@/components/MotionWrapper'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
-export default function BibleStudyPage({ params }: PageProps) {
+export default async function BibleStudyPage({ params }: PageProps) {
+  const { slug } = await params
+  
   // Find the Bible study by matching the href
   const study = migratedBibleStudies.find(s => 
-    s.href === `/bible-studies/${params.slug}` || 
-    s.id === params.slug
+    s.href === `/bible-studies/${slug}` || 
+    s.id === slug
   )
 
   if (!study) {
