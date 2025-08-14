@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #F2F4F5;
+    --foreground: #2B2B2B;
+  }
+
+  body {
+    @apply bg-ivory text-graphite;
+  }
+}
+
+@layer components {
+  .glass-effect {
+    @apply backdrop-blur-md bg-white/70 border border-white/20;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-steel-blue to-cyber-teal bg-clip-text text-transparent;
+  }
+
+  .countryside-gradient {
+    @apply bg-gradient-to-b from-ivory via-white to-sage/10;
+  }
+
+  .smooth-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  /* Fix for touch devices */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
