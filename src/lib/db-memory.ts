@@ -35,14 +35,36 @@ declare global {
   var dbContent: any | undefined
 }
 
+// Get next Sunday and Thursday dates
+const getNextSunday = () => {
+  const today = new Date()
+  const day = today.getDay()
+  const diff = day === 0 ? 0 : 7 - day
+  const nextSunday = new Date(today)
+  nextSunday.setDate(today.getDate() + diff)
+  return nextSunday.toISOString().split('T')[0]
+}
+
+const getNextThursday = () => {
+  const today = new Date()
+  const day = today.getDay()
+  const diff = day <= 4 ? 4 - day : 11 - day
+  const nextThursday = new Date(today)
+  nextThursday.setDate(today.getDate() + diff)
+  return nextThursday.toISOString().split('T')[0]
+}
+
 // Initialize with default events if not exists
 if (!global.dbEvents) {
+  const sundayDate = getNextSunday()
+  const thursdayDate = getNextThursday()
+  
   global.dbEvents = [
     {
-      id: '1',
+      id: 'default-1',
       title: 'Sunday Morning Service',
-      description: 'Join us for worship and the preaching of God\'s Word',
-      date: new Date().toISOString().split('T')[0],
+      description: 'Join us for worship and the preaching of God\'s Word from the King James Bible',
+      date: sundayDate,
       time: '11:00 AM',
       location: 'Whiddon Valley Evangelical Church',
       category: 'service',
@@ -51,10 +73,10 @@ if (!global.dbEvents) {
       updatedAt: new Date().toISOString()
     },
     {
-      id: '2',
+      id: 'default-2',
       title: 'Sunday Evening Service',
       description: 'Evening worship and Bible teaching',
-      date: new Date().toISOString().split('T')[0],
+      date: sundayDate,
       time: '6:00 PM',
       location: 'Whiddon Valley Evangelical Church',
       category: 'service',
@@ -63,10 +85,10 @@ if (!global.dbEvents) {
       updatedAt: new Date().toISOString()
     },
     {
-      id: '3',
+      id: 'default-3',
       title: 'Thursday Bible Study',
-      description: 'In-depth study of Scripture',
-      date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      description: 'In-depth study of Scripture with Pastor',
+      date: thursdayDate,
       time: '10:30 AM',
       location: 'Whiddon Valley Evangelical Church',
       category: 'study',
