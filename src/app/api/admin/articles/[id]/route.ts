@@ -18,15 +18,17 @@ const verifyAdmin = (request: NextRequest) => {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = verifyAdmin(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { id } = await params
+
   try {
-    const article = getArticle(params.id)
+    const article = getArticle(id)
     if (!article) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 })
     }
@@ -42,16 +44,18 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = verifyAdmin(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { id } = await params
+
   try {
     const body = await request.json()
-    const updatedArticle = updateArticle(params.id, body)
+    const updatedArticle = updateArticle(id, body)
     if (!updatedArticle) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 })
     }
@@ -67,15 +71,17 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = verifyAdmin(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { id } = await params
+
   try {
-    deleteArticle(params.id)
+    deleteArticle(id)
     return NextResponse.json({ message: 'Article deleted successfully' })
   } catch (error) {
     console.error('Failed to delete article:', error)

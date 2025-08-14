@@ -18,15 +18,17 @@ const verifyAdmin = (request: NextRequest) => {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = verifyAdmin(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { id } = await params
+
   try {
-    const event = getEvent(params.id)
+    const event = getEvent(id)
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
@@ -42,16 +44,18 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = verifyAdmin(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { id } = await params
+
   try {
     const body = await request.json()
-    const updatedEvent = updateEvent(params.id, body)
+    const updatedEvent = updateEvent(id, body)
     if (!updatedEvent) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
@@ -67,15 +71,17 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = verifyAdmin(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { id } = await params
+
   try {
-    deleteEvent(params.id)
+    deleteEvent(id)
     return NextResponse.json({ message: 'Event deleted successfully' })
   } catch (error) {
     console.error('Failed to delete event:', error)
