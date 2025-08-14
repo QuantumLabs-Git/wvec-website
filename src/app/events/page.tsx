@@ -224,8 +224,8 @@ END:VCALENDAR`
                 value={selectedDate}
                 activeStartDate={currentMonth}
                 tileClassName={({ date }) => {
-                  const hasEvent = mockEvents.some(event => 
-                    event.date.toDateString() === date.toDateString()
+                  const hasEvent = events.some(event => 
+                    new Date(event.date).toDateString() === date.toDateString()
                   )
                   return hasEvent ? 'has-event' : ''
                 }}
