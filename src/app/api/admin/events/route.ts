@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getEvents, createEvent } from '@/lib/db'
+import { getEvents, createEvent } from '@/lib/db-memory'
 import jwt from 'jsonwebtoken'
 
 // Middleware to verify admin token

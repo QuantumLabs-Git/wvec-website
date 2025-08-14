@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Calendar from 'react-calendar'
 import { format, addMonths, subMonths } from 'date-fns'
@@ -11,44 +11,37 @@ import 'react-calendar/dist/Calendar.css'
 interface Event {
   id: string
   title: string
-  date: Date
+  date: string
   time: string
   location: string
-  description: string
+  description?: string
+  category?: string
   image?: string
 }
-
-// Mock events data
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    title: 'Easter Sunday Service',
-    date: new Date('2024-03-31'),
-    time: '11:00 AM',
-    location: 'Main Sanctuary',
-    description: 'Join us for a special Easter celebration service with communion and baptism',
-  },
-  {
-    id: '2',
-    title: 'Good Friday Service',
-    date: new Date('2024-03-29'),
-    time: '7:00 PM',
-    location: 'Main Sanctuary',
-    description: 'A solemn service of reflection on the cross',
-  },
-  {
-    id: '3',
-    title: 'Youth Bible Study',
-    date: new Date('2024-04-05'),
-    time: '7:00 PM',
-    location: 'Youth Hall',
-    description: 'Weekly study for ages 14-18 exploring the book of Romans',
-  },
-]
 
 export default function EventsPage() {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchEvents()
+  }, [])
+
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch('/api/public/events')
+      if (response.ok) {
+        const data = await response.json()
+        setEvents(data.events || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch events:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handlePrevMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1))
@@ -58,10 +51,11 @@ export default function EventsPage() {
     setCurrentMonth(addMonths(currentMonth, 1))
   }
 
-  const monthEvents = mockEvents.filter(event => 
-    event.date.getMonth() === currentMonth.getMonth() &&
-    event.date.getFullYear() === currentMonth.getFullYear()
-  )
+  const monthEvents = events.filter(event => {
+    const eventDate = new Date(event.date)
+    return eventDate.getMonth() === currentMonth.getMonth() &&
+      eventDate.getFullYear() === currentMonth.getFullYear()
+  })
 
   const addToCalendar = (event: Event) => {
     const startDate = new Date(event.date)
@@ -183,7 +177,7 @@ END:VCALENDAR`
                     <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-charcoal/70 mb-3 sm:mb-4">
                       <div className="flex items-start sm:items-center space-x-2">
                         <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 mt-0.5 sm:mt-0" />
-                        <span className="line-clamp-2">{format(event.date, 'EEEE, MMMM d, yyyy')}</span>
+                        <span className="line-clamp-2">{format(new Date(event.date), 'EEEE, MMMM d, yyyy')}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />

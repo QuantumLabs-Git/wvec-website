@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getEvent, updateEvent, deleteEvent } from '@/lib/db'
+import { getEvent, updateEvent, deleteEvent } from '@/lib/db-memory'
 import jwt from 'jsonwebtoken'
 
 const verifyAdmin = (request: NextRequest) => {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getArticles, createArticle } from '@/lib/db'
+import { getArticles, createArticle } from '@/lib/db-memory'
 import jwt from 'jsonwebtoken'
 
 const verifyAdmin = (request: NextRequest) => {
