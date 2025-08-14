@@ -19,12 +19,12 @@ interface StudyItem {
 
 // Get all unique series categories
 const allStudies = migratedBibleStudies
-const seriesCategories = [...new Set(allStudies.filter(s => 
+const seriesCategories = Array.from(new Set(allStudies.filter(s => 
   s.category !== 'book' && 
   s.category !== 'topical' && 
   s.category !== 'annual' && 
   s.category !== 'special'
-).map(s => s.category))]
+).map(s => s.category)))
 
 // Group studies by series
 const studySeries = seriesCategories.map(category => ({
