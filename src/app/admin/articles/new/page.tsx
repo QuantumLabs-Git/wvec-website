@@ -42,7 +42,8 @@ export default function NewArticlePage() {
         router.push('/admin/articles')
       } else {
         const error = await response.json()
-        alert(error.message || 'Failed to create article')
+        console.error('Article creation error:', error)
+        alert(error.details || error.message || 'Failed to create article')
       }
     } catch (error) {
       console.error('Failed to create article:', error)
