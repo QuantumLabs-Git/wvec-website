@@ -39,7 +39,7 @@ export default function ArticlesPage() {
         const uniqueCategories = Array.from(new Set(
           data.articles
             .filter((a: Article) => a.category)
-            .map((a: Article) => a.category)
+            .map((a: Article) => a.category as string)
         )).sort()
         setCategories(['All', ...uniqueCategories])
       }
