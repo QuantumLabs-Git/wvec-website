@@ -36,11 +36,13 @@ export default function ArticlesPage() {
         setArticles(data.articles || [])
         
         // Extract unique categories
-        const uniqueCategories = Array.from(new Set(
-          data.articles
-            .filter((a: Article) => a.category)
-            .map((a: Article) => a.category as string)
-        )).sort()
+        const categorySet = new Set<string>()
+        data.articles.forEach((article: Article) => {
+          if (article.category) {
+            categorySet.add(article.category)
+          }
+        })
+        const uniqueCategories = Array.from(categorySet).sort()
         setCategories(['All', ...uniqueCategories])
       }
     } catch (error) {
