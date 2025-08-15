@@ -98,7 +98,7 @@ export const getEvent = async (id: string) => {
   return data
 }
 
-export const createEvent = async (event: Omit<Event, 'id' | 'created_at' | 'updated_at'>) => {
+export const createEvent = async (event: any) => {
   // Map the field names to match database schema
   const eventData = {
     title: event.title,
@@ -107,7 +107,7 @@ export const createEvent = async (event: Omit<Event, 'id' | 'created_at' | 'upda
     time: event.time,
     location: event.location,
     category: event.category || 'general',
-    is_published: event.is_published !== undefined ? event.is_published : event.isPublished || false
+    is_published: event.is_published !== undefined ? event.is_published : (event.isPublished || false)
   }
   
   const { data, error } = await supabase
