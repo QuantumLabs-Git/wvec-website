@@ -32,8 +32,13 @@ export default function NewArticlePage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          ...formData,
+          title: formData.title,
+          excerpt: formData.excerpt,
+          content: formData.content,
+          category: formData.category,
+          author: formData.author,
           tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+          featured_image: formData.featuredImage || null,
           is_published: formData.isPublished
         })
       })
