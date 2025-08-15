@@ -86,14 +86,26 @@ export const getEvent = async (id: string) => {
 }
 
 export const createEvent = async (event: Omit<Event, 'id' | 'created_at' | 'updated_at'>) => {
+  // Map the field names to match database schema
+  const eventData = {
+    title: event.title,
+    description: event.description || null,
+    date: event.date,
+    time: event.time,
+    location: event.location,
+    category: event.category || 'general',
+    is_published: event.is_published !== undefined ? event.is_published : event.isPublished || false
+  }
+  
   const { data, error } = await supabase
     .from('events')
-    .insert([event])
+    .insert([eventData])
     .select()
     .single()
   
   if (error) {
-    console.error('Error creating event:', error)
+    console.error('Error creating event in Supabase:', error)
+    console.error('Event data attempted:', eventData)
     throw error
   }
   

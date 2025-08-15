@@ -45,10 +45,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const newEvent = await createEvent(body)
     return NextResponse.json({ event: newEvent })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to create event:', error)
     return NextResponse.json(
-      { error: 'Failed to create event' },
+      { 
+        error: 'Failed to create event',
+        details: error?.message || 'Unknown error',
+        hint: error?.hint
+      },
       { status: 500 }
     )
   }
