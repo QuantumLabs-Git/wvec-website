@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    console.log('Fetching events from Supabase...')
     const events = await getEvents()
+    console.log('Events fetched:', events?.length || 0)
     return NextResponse.json({ events })
   } catch (error) {
     console.error('Failed to fetch events:', error)
