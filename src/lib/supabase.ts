@@ -38,11 +38,19 @@ export interface PageContent {
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+// For server-side operations (create, update, delete), use service key if available
+// For client-side operations (read), anon key is sufficient
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || ''
+
+// Use service key if available (for server-side operations), otherwise use anon key
+const supabaseKey = supabaseServiceKey || supabaseAnonKey
 
 console.log('Initializing Supabase with:', {
   url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'NOT SET',
-  hasKey: !!supabaseKey
+  hasServiceKey: !!supabaseServiceKey,
+  hasAnonKey: !!supabaseAnonKey,
+  usingKey: supabaseServiceKey ? 'service' : 'anon'
 })
 
 if (!supabaseUrl || !supabaseKey) {
