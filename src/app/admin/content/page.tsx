@@ -23,6 +23,12 @@ export default function ContentEditorPage() {
   ]
 
   useEffect(() => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('admin_token')
+    if (!token) {
+      window.location.href = '/admin/login'
+      return
+    }
     fetchPageContent(selectedPage)
   }, [selectedPage])
 
@@ -65,7 +71,17 @@ export default function ContentEditorPage() {
         setSaveMessage('Content saved successfully!')
         setTimeout(() => setSaveMessage(''), 3000)
       } else {
-        setSaveMessage('Failed to save content')
+        const error = await response.json()
+        console.error('Save error:', error)
+        if (response.status === 401) {
+          setSaveMessage('Session expired. Please log in again.')
+          // Redirect to login after a short delay
+          setTimeout(() => {
+            window.location.href = '/admin/login'
+          }, 2000)
+        } else {
+          setSaveMessage(error.details || 'Failed to save content')
+        }
       }
     } catch (error) {
       console.error('Failed to save content:', error)
