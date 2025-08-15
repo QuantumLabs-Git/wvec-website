@@ -52,12 +52,17 @@ export async function PUT(
 
   try {
     const body = await request.json()
+    console.log('Updating page content for:', page, body.content)
     const updatedContent = await updatePageContent(page, body.content)
     return NextResponse.json({ content: updatedContent })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to update page content:', error)
     return NextResponse.json(
-      { error: 'Failed to update page content' },
+      { 
+        error: 'Failed to update page content',
+        details: error?.message || 'Unknown error',
+        hint: error?.hint
+      },
       { status: 500 }
     )
   }

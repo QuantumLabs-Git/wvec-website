@@ -388,19 +388,30 @@ export const getPageContent = async (pageName: string) => {
 }
 
 export const updatePageContent = async (pageName: string, content: any) => {
+  console.log('Updating page content in Supabase:', { pageName, content })
+  
   const { data, error } = await supabase
     .from('page_content')
-    .upsert([
-      { page_name: pageName, content }
-    ])
+    .upsert(
+      { 
+        page_name: pageName, 
+        content: content,
+        updated_at: new Date().toISOString()
+      },
+      { 
+        onConflict: 'page_name' 
+      }
+    )
     .select()
     .single()
   
   if (error) {
-    console.error('Error updating page content:', error)
+    console.error('Error updating page content in Supabase:', error)
+    console.error('Attempted data:', { pageName, content })
     throw error
   }
   
+  console.log('Page content updated successfully:', data)
   return data?.content
 }
 
