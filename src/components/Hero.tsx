@@ -4,55 +4,79 @@ import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 
 const Hero = () => {
-  const [videoSrc, setVideoSrc] = useState<string | null>(null)
+  // REPLACE THESE WITH YOUR YOUTUBE VIDEO IDs
+  const YOUTUBE_VIDEO_DESKTOP = 'YOUR_DESKTOP_VIDEO_ID' // Replace with your YouTube video ID
+  const YOUTUBE_VIDEO_MOBILE = 'YOUR_MOBILE_VIDEO_ID'   // Replace with your YouTube video ID
+  const YOUTUBE_VIDEO_SQUARE = 'YOUR_SQUARE_VIDEO_ID'   // Replace with your YouTube video ID
+  
+  const [videoId, setVideoId] = useState<string>('')
   const [showVideo, setShowVideo] = useState(false)
   
   useEffect(() => {
-    // Delay video loading until after initial page load
-    const loadVideo = () => {
+    // Determine which video to show based on screen size
+    const selectVideo = () => {
       const width = window.innerWidth
       const height = window.innerHeight
       const aspectRatio = width / height
       
-      let selectedVideo = '/videos/WVEChomepagevideo.mp4'
+      let selectedVideoId = YOUTUBE_VIDEO_DESKTOP
       
       // For very narrow screens (phones in portrait)
       if (width <= 480 && aspectRatio < 0.75) {
-        selectedVideo = '/videos/WVECHomepageVertical.mp4'
+        selectedVideoId = YOUTUBE_VIDEO_MOBILE
       } 
       // For square-ish screens or tablets
       else if (width <= 768 && aspectRatio < 1.3) {
-        selectedVideo = '/videos/WVECHomepageSquare.mp4'
+        selectedVideoId = YOUTUBE_VIDEO_SQUARE
       }
       
-      setVideoSrc(selectedVideo)
-      setShowVideo(true)
+      setVideoId(selectedVideoId)
     }
     
-    // Load video after 2 seconds (after initial page render)
-    const timer = setTimeout(loadVideo, 2000)
+    // Select video immediately
+    selectVideo()
     
-    return () => clearTimeout(timer)
+    // Show video after 1 second (for better performance)
+    const timer = setTimeout(() => setShowVideo(true), 1000)
+    
+    // Update on resize
+    window.addEventListener('resize', selectVideo)
+    
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('resize', selectVideo)
+    }
   }, [])
   return (
     <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center">
-      {/* Background with delayed video loading */}
+      {/* Background with YouTube video */}
       <div className="absolute inset-0 w-full h-full overflow-hidden">
-        {/* Always show gradient background */}
+        {/* Always show gradient background initially */}
         <div className="absolute inset-0 bg-gradient-to-br from-steel-blue via-sage to-champagne" />
         
-        {/* Only load video after delay */}
-        {showVideo && videoSrc && (
-          <video
-            key={videoSrc}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover opacity-80"
-          >
-            <source src={videoSrc} type="video/mp4" />
-          </video>
+        {/* YouTube iframe - loads after delay for performance */}
+        {showVideo && videoId && videoId !== 'YOUR_DESKTOP_VIDEO_ID' && (
+          <iframe
+            key={videoId}
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&rel=0&modestbranding=1&playlist=${videoId}&enablejsapi=1&disablekb=1&fs=0&iv_load_policy=3`}
+            className="absolute inset-0 w-full h-full object-cover opacity-80 pointer-events-none"
+            style={{ 
+              width: '100vw',
+              height: '100vh',
+              transform: 'scale(1.2)', // Slightly zoom to hide any YouTube UI
+              border: 'none'
+            }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            title="Church Welcome Video"
+            loading="lazy"
+          />
+        )}
+        
+        {/* Fallback message if video IDs not set */}
+        {showVideo && videoId === 'YOUR_DESKTOP_VIDEO_ID' && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-white/50 text-sm">Video coming soon</p>
+          </div>
         )}
         
         {/* Cinematic overlay layers */}
