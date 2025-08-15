@@ -1,8 +1,9 @@
-import { Calendar, User, ArrowLeft, BookOpen } from 'lucide-react'
+import { Calendar, User, ArrowLeft, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { migratedArticles } from '@/lib/content-migration'
+import { getArticles, getArticle } from '@/lib/supabase'
 import { MotionDiv } from '@/components/MotionWrapper'
+import ShareButton from '@/components/ShareButton'
 
 interface PageProps {
   params: Promise<{
@@ -10,14 +11,31 @@ interface PageProps {
   }>
 }
 
+async function getArticleBySlug(slug: string) {
+  try {
+    // First try to get by slug
+    const articles = await getArticles(true)
+    let article = articles.find((a: any) => a.slug === slug)
+    
+    // If not found by slug, try by ID
+    if (!article) {
+      article = await getArticle(slug)
+      // Check if it's published
+      if (article && !article.is_published) {
+        return null
+      }
+    }
+    
+    return article
+  } catch (error) {
+    console.error('Error fetching article:', error)
+    return null
+  }
+}
+
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params
-  
-  // Find the article by matching the href
-  const article = migratedArticles.find(a => 
-    a.href === `/articles/${slug}` || 
-    a.id === slug
-  )
+  const article = await getArticleBySlug(slug)
 
   if (!article) {
     notFound()
@@ -53,29 +71,34 @@ export default async function ArticlePage({ params }: PageProps) {
                   <span>{article.author}</span>
                 </div>
               )}
-              {article.date && (
+              {article.created_at && (
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  <span>{new Date(article.date).toLocaleDateString('en-GB')}</span>
+                  <span>{new Date(article.created_at).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}</span>
                 </div>
               )}
-              {article.series && (
-                <div className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4" />
-                  <span className="text-steel-blue">{article.series}</span>
-                </div>
-              )}
+              {/* Reading time estimate */}
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                <span>{Math.ceil(article.content.split(' ').length / 200)} min read</span>
+              </div>
             </div>
 
             <div className="mt-4 flex gap-2">
-              <span className="inline-block px-3 py-1 bg-sage/20 text-charcoal rounded-full text-sm">
-                {article.category}
-              </span>
-              {article.series && (
-                <span className="inline-block px-3 py-1 bg-champagne/30 text-charcoal rounded-full text-sm">
-                  {article.series}
+              {article.category && (
+                <span className="inline-block px-3 py-1 bg-sage/20 text-charcoal rounded-full text-sm">
+                  {article.category}
                 </span>
               )}
+              {article.tags?.map((tag: string) => (
+                <span key={tag} className="inline-block px-3 py-1 bg-champagne/30 text-charcoal rounded-full text-sm">
+                  {tag}
+                </span>
+              ))}
             </div>
           </MotionDiv>
         </div>
@@ -90,56 +113,73 @@ export default async function ArticlePage({ params }: PageProps) {
             transition={{ delay: 0.2 }}
             className="prose prose-lg max-w-none"
           >
-            {/* Content Notice */}
             <div className="glass-effect rounded-xl p-8 mb-12">
-              <h2 className="text-xl font-semibold text-charcoal mb-4">
-                Content Migration Notice
-              </h2>
-              <p className="text-charcoal/70 mb-4">
-                This article was originally published on our previous website. The full content is being migrated 
-                to our new platform. In the meantime, you can:
-              </p>
-              <ul className="list-disc list-inside text-charcoal/70 space-y-2">
-                <li>Contact the church office for a copy of this article</li>
-                <li>Visit us during service times to access printed materials</li>
-                <li>Check back soon as we continue updating our content</li>
-              </ul>
-              
+              {/* Show excerpt if available */}
               {article.excerpt && (
-                <div className="mt-6 p-4 bg-sage/10 rounded-lg">
-                  <h3 className="font-semibold text-charcoal mb-2">Summary</h3>
-                  <p className="text-charcoal/70">{article.excerpt}</p>
+                <div className="text-lg text-charcoal/70 mb-8 font-medium border-l-4 border-steel-blue pl-4">
+                  {article.excerpt}
                 </div>
               )}
+              
+              {/* Show featured image if available */}
+              {article.featured_image && (
+                <div className="mb-8 rounded-xl overflow-hidden">
+                  <img 
+                    src={article.featured_image} 
+                    alt={article.title}
+                    className="w-full h-auto"
+                  />
+                </div>
+              )}
+              
+              {/* Article content */}
+              <div className="article-content text-charcoal/80 leading-relaxed">
+                {article.content.split('\n\n').map((paragraph: string, index: number) => {
+                  // Check for headers
+                  if (paragraph.startsWith('## ')) {
+                    return <h2 key={index} className="text-2xl font-semibold text-charcoal mb-4 mt-6">{paragraph.slice(3)}</h2>
+                  }
+                  if (paragraph.startsWith('### ')) {
+                    return <h3 key={index} className="text-xl font-semibold text-charcoal mb-3 mt-4">{paragraph.slice(4)}</h3>
+                  }
+                  // Check for lists
+                  if (paragraph.startsWith('- ') || paragraph.startsWith('* ')) {
+                    const items = paragraph.split('\n')
+                    return (
+                      <ul key={index} className="list-disc list-inside mb-4 space-y-2">
+                        {items.map((item, i) => (
+                          <li key={i} className="ml-4">{item.slice(2)}</li>
+                        ))}
+                      </ul>
+                    )
+                  }
+                  // Check for quotes
+                  if (paragraph.startsWith('> ')) {
+                    return (
+                      <blockquote key={index} className="border-l-4 border-steel-blue pl-4 italic text-charcoal/70 mb-4">
+                        {paragraph.slice(2)}
+                      </blockquote>
+                    )
+                  }
+                  // Regular paragraph
+                  return <p key={index} className="mb-4">{paragraph}</p>
+                })}
+              </div>
             </div>
 
-            {/* Related Articles */}
-            {article.series && (
-              <div className="mt-12">
-                <h3 className="text-2xl font-semibold text-charcoal mb-6">
-                  More from {article.series}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {migratedArticles
-                    .filter(a => a.series === article.series && a.id !== article.id)
-                    .slice(0, 4)
-                    .map(related => (
-                      <Link
-                        key={related.id}
-                        href={related.href}
-                        className="glass-effect rounded-lg p-4 hover:shadow-md smooth-transition"
-                      >
-                        <h4 className="font-medium text-charcoal hover:text-steel-blue smooth-transition">
-                          {related.title}
-                        </h4>
-                        <p className="text-sm text-charcoal/60 mt-1">
-                          {related.category}
-                        </p>
-                      </Link>
-                    ))}
-                </div>
+            {/* Share buttons */}
+            <div className="text-center py-8">
+              <p className="text-charcoal/60 mb-4">Share this article</p>
+              <div className="flex justify-center gap-4">
+                <ShareButton title={article.title} text={article.excerpt} />
+                <Link
+                  href="/articles"
+                  className="px-4 py-2 border border-steel-blue text-steel-blue rounded-lg hover:bg-steel-blue hover:text-white smooth-transition"
+                >
+                  More Articles
+                </Link>
               </div>
-            )}
+            </div>
           </MotionDiv>
         </div>
       </section>
@@ -149,7 +189,13 @@ export default async function ArticlePage({ params }: PageProps) {
 
 // Generate static params for all articles
 export async function generateStaticParams() {
-  return migratedArticles.map((article) => ({
-    slug: article.href.replace('/articles/', '')
-  }))
+  try {
+    const articles = await getArticles(true) // Get published articles
+    return articles.map((article: any) => ({
+      slug: article.slug || article.id,
+    }))
+  } catch (error) {
+    console.error('Error generating static params:', error)
+    return []
+  }
 }
