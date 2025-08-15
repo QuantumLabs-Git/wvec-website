@@ -276,20 +276,37 @@ export const getArticle = async (id: string) => {
   return data
 }
 
-export const createArticle = async (article: Omit<Article, 'id' | 'created_at' | 'updated_at'>) => {
+export const createArticle = async (article: any) => {
+  // Map the field names to match database schema
+  const articleData: any = {
+    title: article.title,
+    excerpt: article.excerpt || null,
+    content: article.content,
+    category: article.category || null,
+    author: article.author || null,
+    tags: article.tags || [],
+    featured_image: article.featured_image || article.featuredImage || null,
+    is_published: article.is_published !== undefined ? article.is_published : (article.isPublished || false)
+  }
+  
   // Generate slug from title if not provided
   if (!article.slug) {
-    article.slug = article.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    articleData.slug = article.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+  } else {
+    articleData.slug = article.slug
   }
+  
+  console.log('Creating article with data:', articleData)
   
   const { data, error } = await supabase
     .from('articles')
-    .insert([article])
+    .insert([articleData])
     .select()
     .single()
   
   if (error) {
-    console.error('Error creating article:', error)
+    console.error('Error creating article in Supabase:', error)
+    console.error('Article data attempted:', articleData)
     throw error
   }
   

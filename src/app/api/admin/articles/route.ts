@@ -42,12 +42,17 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
+    console.log('Received article data:', body)
     const newArticle = await createArticle(body)
     return NextResponse.json({ article: newArticle })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to create article:', error)
     return NextResponse.json(
-      { error: 'Failed to create article' },
+      { 
+        error: 'Failed to create article',
+        details: error?.message || 'Unknown error',
+        hint: error?.hint
+      },
       { status: 500 }
     )
   }
