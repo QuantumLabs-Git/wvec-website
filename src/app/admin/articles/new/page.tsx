@@ -33,7 +33,8 @@ export default function NewArticlePage() {
         },
         body: JSON.stringify({
           ...formData,
-          tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+          tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+          is_published: formData.isPublished
         })
       })
 

@@ -7,16 +7,20 @@ import { Plus, Edit2, Trash2, FileText, Calendar, Eye, EyeOff, Search, Tag } fro
 interface Article {
   id: string
   title: string
-  excerpt: string
+  excerpt?: string
   content: string
-  category: string
-  author: string
-  slug: string
-  isPublished: boolean
-  featuredImage?: string
-  tags: string[]
-  createdAt: string
-  updatedAt: string
+  category?: string
+  author?: string
+  slug?: string
+  is_published?: boolean
+  isPublished?: boolean  // For backwards compatibility
+  featured_image?: string
+  featuredImage?: string  // For backwards compatibility
+  tags?: string[]
+  created_at?: string
+  createdAt?: string  // For backwards compatibility
+  updated_at?: string
+  updatedAt?: string  // For backwards compatibility
 }
 
 export default function ArticlesManagementPage() {
@@ -80,13 +84,13 @@ export default function ArticlesManagementPage() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ isPublished: !currentStatus })
+        body: JSON.stringify({ is_published: !currentStatus })
       })
 
       if (response.ok) {
         setArticles(articles.map(article => 
           article.id === articleId 
-            ? { ...article, isPublished: !currentStatus }
+            ? { ...article, is_published: !currentStatus, isPublished: !currentStatus }
             : article
         ))
       }
@@ -176,24 +180,24 @@ export default function ArticlesManagementPage() {
         ) : (
           filteredArticles.map((article) => (
             <div key={article.id} className="glass-effect rounded-xl overflow-hidden hover:shadow-lg smooth-transition">
-              {article.featuredImage && (
+              {(article.featured_image || article.featuredImage) && (
                 <div className="h-48 bg-gradient-to-br from-steel-blue/20 to-cyber-teal/20"></div>
               )}
               <div className="p-6">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-medium text-steel-blue bg-steel-blue/10 px-2 py-1 rounded">
-                    {article.category.replace('-', ' ')}
+                    {(article.category || 'general').replace('-', ' ')}
                   </span>
                   <button
-                    onClick={() => togglePublish(article.id, article.isPublished)}
+                    onClick={() => togglePublish(article.id, article.is_published || article.isPublished || false)}
                     className={`p-1 rounded ${
-                      article.isPublished 
+                      (article.is_published ?? article.isPublished) 
                         ? 'text-green-600 hover:bg-green-50' 
                         : 'text-charcoal/40 hover:bg-charcoal/5'
                     }`}
-                    title={article.isPublished ? 'Published' : 'Draft'}
+                    title={(article.is_published ?? article.isPublished) ? 'Published' : 'Draft'}
                   >
-                    {article.isPublished ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    {(article.is_published ?? article.isPublished) ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                   </button>
                 </div>
                 
@@ -218,7 +222,7 @@ export default function ArticlesManagementPage() {
                 <div className="flex items-center justify-between text-xs text-charcoal/50 mb-4">
                   <div className="flex items-center space-x-1">
                     <Calendar className="w-3 h-3" />
-                    <span>{new Date(article.createdAt).toLocaleDateString()}</span>
+                    <span>{new Date(article.created_at || article.createdAt || Date.now()).toLocaleDateString()}</span>
                   </div>
                   <span>{article.author}</span>
                 </div>

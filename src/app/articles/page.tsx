@@ -3,86 +3,59 @@
 import { motion } from 'framer-motion'
 import { FileText, Calendar, User, Search } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useMemo } from 'react'
-import { migratedArticles, getArticlesBySeries } from '@/lib/content-migration'
+import { useState, useEffect } from 'react'
 
 interface Article {
   id: string
   title: string
   author?: string
-  date?: string
+  created_at?: string
   excerpt?: string
-  category: string
-  series?: string
-  href: string
+  category?: string
+  tags?: string[]
+  slug?: string
+  is_published?: boolean
 }
 
-// Combine migrated articles with any new articles
-const articles: Article[] = [
-  ...migratedArticles.map(article => ({
-    ...article,
-    author: article.author || 'WVEC',
-    excerpt: article.excerpt || `Part of the ${article.series || article.category} series`
-  })),
-  // Add any new articles here
-  {
-    id: 'new-1',
-    title: 'The Authority of Scripture',
-    author: 'Pastor David Kay',
-    date: '2024-03-15',
-    excerpt: 'An exploration of why we believe in the full and verbal inspiration of the Old and New Testament Scriptures as the infallible Word of God.',
-    category: 'Doctrine',
-    href: '/articles/authority-of-scripture'
-  },
-  {
-    id: 'new-2',
-    title: 'Understanding the Doctrines of Grace',
-    author: 'Elder John Smith',
-    date: '2024-03-01',
-    excerpt: 'A clear explanation of the five points of Calvinism and their biblical foundation, helping believers understand God\'s sovereign grace.',
-    category: 'Doctrine',
-    href: '/articles/doctrines-of-grace'
-  },
-  {
-    id: 'new-3',
-    title: 'The Importance of Family Worship',
-    author: 'Pastor David Kay',
-    date: '2024-02-20',
-    excerpt: 'Practical guidance on establishing and maintaining family worship in the home, with suggested patterns and resources.',
-    category: 'Christian Living',
-    href: '/articles/family-worship'
-  },
-  {
-    id: 'new-4',
-    title: 'What is a Reformed Baptist Church?',
-    author: 'Church Leadership',
-    date: '2024-02-10',
-    excerpt: 'An introduction to Reformed Baptist distinctives, including our confession of faith and church practices.',
-    category: 'Church Life',
-    href: '/articles/reformed-baptist-church'
-  }
-]
-
-// Get unique categories from all articles
-const allCategories = Array.from(new Set(articles.map(a => a.category))).sort()
-const categories = ['All', ...allCategories]
-
-// Get unique series
-const allSeries = Array.from(new Set(articles.filter(a => a.series).map(a => a.series!))).sort()
-
 export default function ArticlesPage() {
+  const [articles, setArticles] = useState<Article[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
-  const [selectedSeries, setSelectedSeries] = useState<string | null>(null)
+  const [categories, setCategories] = useState<string[]>(['All'])
+
+  useEffect(() => {
+    fetchArticles()
+  }, [])
+
+  const fetchArticles = async () => {
+    try {
+      const response = await fetch('/api/public/articles')
+      if (response.ok) {
+        const data = await response.json()
+        setArticles(data.articles || [])
+        
+        // Extract unique categories
+        const uniqueCategories = Array.from(new Set(
+          data.articles
+            .filter((a: Article) => a.category)
+            .map((a: Article) => a.category)
+        )).sort()
+        setCategories(['All', ...uniqueCategories])
+      }
+    } catch (error) {
+      console.error('Failed to fetch articles:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredArticles = articles.filter(article => {
     const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (article.excerpt?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-                         (article.author?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-                         (article.series?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
+                         (article.author?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
     const matchesCategory = selectedCategory === 'All' || article.category === selectedCategory
-    const matchesSeries = !selectedSeries || article.series === selectedSeries
-    return matchesSearch && matchesCategory && matchesSeries
+    return matchesSearch && matchesCategory
   })
 
   return (
@@ -130,12 +103,9 @@ export default function ArticlesPage() {
                 {categories.map(category => (
                   <button
                     key={category}
-                    onClick={() => {
-                      setSelectedCategory(category)
-                      setSelectedSeries(null)
-                    }}
+                    onClick={() => setSelectedCategory(category)}
                     className={`px-4 py-2 rounded-full smooth-transition ${
-                      selectedCategory === category && !selectedSeries
+                      selectedCategory === category
                         ? 'bg-steel-blue text-white'
                         : 'bg-sage/10 text-charcoal hover:bg-sage/20'
                     }`}
@@ -144,37 +114,6 @@ export default function ArticlesPage() {
                   </button>
                 ))}
               </div>
-              
-              {/* Series Filter - Show only if there are series */}
-              {allSeries.length > 0 && (
-                <div className="flex gap-2 flex-wrap">
-                  <span className="text-sm text-charcoal/60 self-center mr-2">Series:</span>
-                  {allSeries.map(series => (
-                    <button
-                      key={series}
-                      onClick={() => {
-                        setSelectedSeries(series)
-                        setSelectedCategory('All')
-                      }}
-                      className={`px-3 py-1.5 text-sm rounded-full smooth-transition ${
-                        selectedSeries === series
-                          ? 'bg-cyber-teal text-white'
-                          : 'bg-champagne/30 text-charcoal hover:bg-champagne/50'
-                      }`}
-                    >
-                      {series} ({articles.filter(a => a.series === series).length})
-                    </button>
-                  ))}
-                  {selectedSeries && (
-                    <button
-                      onClick={() => setSelectedSeries(null)}
-                      className="px-3 py-1.5 text-sm rounded-full bg-charcoal/10 text-charcoal hover:bg-charcoal/20 smooth-transition"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -183,7 +122,14 @@ export default function ArticlesPage() {
       {/* Articles Grid */}
       <section className="py-12">
         <div className="max-w-6xl mx-auto px-4">
-          {filteredArticles.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center">
+                <div className="w-12 h-12 border-4 border-steel-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-charcoal/60">Loading articles...</p>
+              </div>
+            </div>
+          ) : filteredArticles.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -202,19 +148,21 @@ export default function ArticlesPage() {
                   transition={{ delay: index * 0.1 }}
                   className="glass-effect rounded-2xl p-8 hover:shadow-xl smooth-transition group"
                 >
-                  <div className="mb-4 flex flex-wrap gap-2">
-                    <span className="inline-block px-3 py-1 bg-sage/20 text-charcoal rounded-full text-sm">
-                      {article.category}
-                    </span>
-                    {article.series && (
-                      <span className="inline-block px-3 py-1 bg-champagne/30 text-charcoal rounded-full text-sm">
-                        {article.series}
+                  {article.category && (
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      <span className="inline-block px-3 py-1 bg-sage/20 text-charcoal rounded-full text-sm">
+                        {article.category}
                       </span>
-                    )}
-                  </div>
+                      {article.tags?.map(tag => (
+                        <span key={tag} className="inline-block px-3 py-1 bg-champagne/30 text-charcoal rounded-full text-sm">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   
                   <h2 className="text-2xl font-semibold text-charcoal mb-3 group-hover:text-steel-blue smooth-transition">
-                    <Link href={article.href}>
+                    <Link href={`/articles/${article.slug || article.id}`}>
                       {article.title}
                     </Link>
                   </h2>
@@ -229,10 +177,10 @@ export default function ArticlesPage() {
                         <User className="w-4 h-4" />
                         <span>{article.author}</span>
                       </div>
-                      {article.date && (
+                      {article.created_at && (
                         <div className="flex items-center space-x-1">
                           <Calendar className="w-4 h-4" />
-                          <span>{new Date(article.date).toLocaleDateString('en-GB')}</span>
+                          <span>{new Date(article.created_at).toLocaleDateString('en-GB')}</span>
                         </div>
                       )}
                     </div>
@@ -240,7 +188,7 @@ export default function ArticlesPage() {
                   
                   <div className="mt-6">
                     <Link
-                      href={article.href}
+                      href={`/articles/${article.slug || article.id}`}
                       className="text-steel-blue hover:text-cyber-teal smooth-transition font-medium"
                     >
                       Read more →

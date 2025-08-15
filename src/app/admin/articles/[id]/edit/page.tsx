@@ -47,8 +47,8 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
           category: article.category || 'theology',
           author: article.author || '',
           tags: article.tags ? article.tags.join(', ') : '',
-          featuredImage: article.featuredImage || '',
-          isPublished: article.isPublished || false
+          featuredImage: article.featured_image || article.featuredImage || '',
+          isPublished: article.is_published !== undefined ? article.is_published : (article.isPublished || false)
         })
       } else {
         alert('Failed to load article')
@@ -77,7 +77,8 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
         },
         body: JSON.stringify({
           ...formData,
-          tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+          tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+          is_published: formData.isPublished
         })
       })
 
