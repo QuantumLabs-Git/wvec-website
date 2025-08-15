@@ -313,10 +313,38 @@ export const createArticle = async (article: any) => {
   return data
 }
 
-export const updateArticle = async (id: string, updates: Partial<Article>) => {
+export const updateArticle = async (id: string, updates: any) => {
+  // Map field names to match database schema
+  const updateData: any = {}
+  
+  // Handle field name mapping
+  if (updates.title !== undefined) updateData.title = updates.title
+  if (updates.excerpt !== undefined) updateData.excerpt = updates.excerpt
+  if (updates.content !== undefined) updateData.content = updates.content
+  if (updates.category !== undefined) updateData.category = updates.category
+  if (updates.author !== undefined) updateData.author = updates.author
+  if (updates.tags !== undefined) updateData.tags = updates.tags
+  if (updates.slug !== undefined) updateData.slug = updates.slug
+  
+  // Handle both isPublished and is_published
+  if (updates.is_published !== undefined) {
+    updateData.is_published = updates.is_published
+  } else if (updates.isPublished !== undefined) {
+    updateData.is_published = updates.isPublished
+  }
+  
+  // Handle both featuredImage and featured_image
+  if (updates.featured_image !== undefined) {
+    updateData.featured_image = updates.featured_image
+  } else if (updates.featuredImage !== undefined) {
+    updateData.featured_image = updates.featuredImage
+  }
+  
+  console.log('Updating article with data:', updateData)
+  
   const { data, error } = await supabase
     .from('articles')
-    .update(updates)
+    .update(updateData)
     .eq('id', id)
     .select()
     .single()

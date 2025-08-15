@@ -55,15 +55,20 @@ export async function PATCH(
 
   try {
     const body = await request.json()
+    console.log('Received update request for article:', id, body)
     const updatedArticle = await updateArticle(id, body)
     if (!updatedArticle) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 })
     }
     return NextResponse.json({ article: updatedArticle })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to update article:', error)
     return NextResponse.json(
-      { error: 'Failed to update article' },
+      { 
+        error: 'Failed to update article',
+        details: error?.message || 'Unknown error',
+        hint: error?.hint
+      },
       { status: 500 }
     )
   }
