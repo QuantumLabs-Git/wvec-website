@@ -35,8 +35,10 @@ const Hero = () => {
   }, [])
   return (
     <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center">
-      {/* Background video */}
+      {/* Background gradient - temporary while we optimize video */}
       <div className="absolute inset-0 w-full h-full overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-steel-blue via-sage to-champagne opacity-90" />
+        {/* Video disabled temporarily for performance - uncomment when optimized
         <video
           key={videoSrc}
           autoPlay
@@ -46,9 +48,9 @@ const Hero = () => {
           className="absolute inset-0 w-full h-full object-cover"
         >
           <source src={videoSrc} type="video/mp4" />
-          {/* Fallback to gradient if video doesn't load */}
           Your browser does not support the video tag.
         </video>
+        */}
         
         {/* Cinematic overlay layers */}
         {/* Base darkening layer */}
