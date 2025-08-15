@@ -100,7 +100,7 @@ export const getEvent = async (id: string) => {
 
 export const createEvent = async (event: any) => {
   // Map the field names to match database schema
-  const eventData = {
+  const eventData: any = {
     title: event.title,
     description: event.description || null,
     date: event.date,
@@ -108,6 +108,21 @@ export const createEvent = async (event: any) => {
     location: event.location,
     category: event.category || 'general',
     is_published: event.is_published !== undefined ? event.is_published : (event.isPublished || false)
+  }
+  
+  // Add recurring event fields if applicable
+  if (event.isRecurring) {
+    eventData.is_recurring = true
+    eventData.recurrence_pattern = event.recurrencePattern
+    eventData.recurrence_interval = event.recurrenceInterval || 1
+    
+    if (event.recurrenceEndDate) {
+      eventData.recurrence_end_date = event.recurrenceEndDate
+    }
+    
+    if (event.recurrencePattern === 'weekly' && event.recurrenceDaysOfWeek?.length > 0) {
+      eventData.recurrence_days_of_week = event.recurrenceDaysOfWeek
+    }
   }
   
   const { data, error } = await supabase
@@ -122,7 +137,80 @@ export const createEvent = async (event: any) => {
     throw error
   }
   
+  // If it's a recurring event, generate the recurring instances
+  if (event.isRecurring && data) {
+    await generateRecurringEvents(data)
+  }
+  
   return data
+}
+
+// Helper function to generate recurring event instances
+export const generateRecurringEvents = async (parentEvent: any) => {
+  const instances = []
+  const startDate = new Date(parentEvent.date)
+  const endDate = parentEvent.recurrence_end_date 
+    ? new Date(parentEvent.recurrence_end_date)
+    : new Date(startDate.getTime() + (365 * 24 * 60 * 60 * 1000)) // Default to 1 year if no end date
+  
+  let currentDate = new Date(startDate)
+  currentDate.setDate(currentDate.getDate() + parentEvent.recurrence_interval) // Skip the first instance (parent)
+  
+  while (currentDate <= endDate) {
+    // For weekly recurrence with specific days
+    if (parentEvent.recurrence_pattern === 'weekly' && parentEvent.recurrence_days_of_week?.length > 0) {
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+      const currentDayName = dayNames[currentDate.getDay()]
+      
+      if (!parentEvent.recurrence_days_of_week.includes(currentDayName)) {
+        currentDate.setDate(currentDate.getDate() + 1)
+        continue
+      }
+    }
+    
+    instances.push({
+      title: parentEvent.title,
+      description: parentEvent.description,
+      date: currentDate.toISOString().split('T')[0],
+      time: parentEvent.time,
+      location: parentEvent.location,
+      category: parentEvent.category,
+      is_published: parentEvent.is_published,
+      parent_event_id: parentEvent.id,
+      is_recurring: false // Child events are not themselves recurring
+    })
+    
+    // Move to next occurrence
+    switch (parentEvent.recurrence_pattern) {
+      case 'daily':
+        currentDate.setDate(currentDate.getDate() + parentEvent.recurrence_interval)
+        break
+      case 'weekly':
+        currentDate.setDate(currentDate.getDate() + (7 * parentEvent.recurrence_interval))
+        break
+      case 'monthly':
+        currentDate.setMonth(currentDate.getMonth() + parentEvent.recurrence_interval)
+        break
+      case 'yearly':
+        currentDate.setFullYear(currentDate.getFullYear() + parentEvent.recurrence_interval)
+        break
+    }
+    
+    // Limit to 52 instances to prevent too many database inserts
+    if (instances.length >= 52) break
+  }
+  
+  if (instances.length > 0) {
+    const { error } = await supabase
+      .from('events')
+      .insert(instances)
+    
+    if (error) {
+      console.error('Error creating recurring event instances:', error)
+    }
+  }
+  
+  return instances.length
 }
 
 export const updateEvent = async (id: string, updates: Partial<Event>) => {

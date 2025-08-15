@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, Calendar, Clock, MapPin, Tag, FileText, Save } from 'lucide-react'
+import { ChevronLeft, Calendar, Clock, MapPin, Tag, FileText, Save, Repeat } from 'lucide-react'
 
 export default function NewEventPage() {
   const router = useRouter()
@@ -15,7 +15,12 @@ export default function NewEventPage() {
     time: '',
     location: 'Whiddon Valley Evangelical Church',
     category: 'service',
-    isPublished: false
+    isPublished: false,
+    isRecurring: false,
+    recurrencePattern: 'weekly',
+    recurrenceEndDate: '',
+    recurrenceInterval: 1,
+    recurrenceDaysOfWeek: [] as string[]
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,6 +57,15 @@ export default function NewEventPage() {
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }))
+  }
+
+  const handleDayOfWeekToggle = (day: string) => {
+    setFormData(prev => ({
+      ...prev,
+      recurrenceDaysOfWeek: prev.recurrenceDaysOfWeek.includes(day)
+        ? prev.recurrenceDaysOfWeek.filter(d => d !== day)
+        : [...prev.recurrenceDaysOfWeek, day]
     }))
   }
 
@@ -201,6 +215,113 @@ export default function NewEventPage() {
               Publish immediately (make visible on website)
             </label>
           </div>
+        </div>
+
+        {/* Recurring Event Section */}
+        <div className="glass-effect rounded-xl p-6 space-y-6">
+          <div className="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              id="isRecurring"
+              name="isRecurring"
+              checked={formData.isRecurring}
+              onChange={handleChange}
+              className="w-4 h-4 text-steel-blue border-charcoal/20 rounded focus:ring-steel-blue"
+            />
+            <label htmlFor="isRecurring" className="text-sm font-medium text-charcoal flex items-center space-x-2">
+              <Repeat className="w-4 h-4" />
+              <span>Make this a recurring event</span>
+            </label>
+          </div>
+
+          {formData.isRecurring && (
+            <>
+              {/* Recurrence Pattern */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-2">
+                    Repeat Pattern
+                  </label>
+                  <select
+                    name="recurrencePattern"
+                    value={formData.recurrencePattern}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-charcoal/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue appearance-none"
+                  >
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-2">
+                    Repeat Every
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="number"
+                      name="recurrenceInterval"
+                      value={formData.recurrenceInterval}
+                      onChange={handleChange}
+                      min="1"
+                      max="30"
+                      className="w-20 px-4 py-3 border border-charcoal/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue"
+                    />
+                    <span className="text-sm text-charcoal">
+                      {formData.recurrencePattern === 'daily' && 'day(s)'}
+                      {formData.recurrencePattern === 'weekly' && 'week(s)'}
+                      {formData.recurrencePattern === 'monthly' && 'month(s)'}
+                      {formData.recurrencePattern === 'yearly' && 'year(s)'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Days of Week (for weekly recurrence) */}
+              {formData.recurrencePattern === 'weekly' && (
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-2">
+                    Repeat on Days
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() => handleDayOfWeekToggle(day.toLowerCase())}
+                        className={`px-3 py-1 rounded-lg border smooth-transition ${
+                          formData.recurrenceDaysOfWeek.includes(day.toLowerCase())
+                            ? 'bg-steel-blue text-white border-steel-blue'
+                            : 'border-charcoal/20 text-charcoal hover:border-steel-blue'
+                        }`}
+                      >
+                        {day.slice(0, 3)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* End Date */}
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-2">
+                  End Recurring On (Optional)
+                </label>
+                <input
+                  type="date"
+                  name="recurrenceEndDate"
+                  value={formData.recurrenceEndDate}
+                  onChange={handleChange}
+                  min={formData.date}
+                  className="w-full md:w-auto px-4 py-3 border border-charcoal/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue"
+                />
+                <p className="text-xs text-charcoal/60 mt-1">
+                  Leave empty to continue indefinitely
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Action Buttons */}

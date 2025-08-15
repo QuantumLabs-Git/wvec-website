@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, Clock, MapPin } from 'lucide-react'
 import Link from 'next/link'
@@ -12,38 +13,37 @@ interface Event {
   date: string
   time: string
   location: string
-  description: string
+  description?: string
+  category?: string
+  is_published?: boolean
   image?: string
 }
 
 const UpcomingEvents = () => {
-  // In production, this would come from a database
-  const events: Event[] = [
-    {
-      id: '1',
-      title: 'Easter Sunday Service',
-      date: '2024-03-31',
-      time: '11:00 AM',
-      location: 'Main Sanctuary',
-      description: 'Join us for a special Easter celebration service',
-    },
-    {
-      id: '2',
-      title: 'Youth Bible Study',
-      date: '2024-04-05',
-      time: '7:00 PM',
-      location: 'Youth Hall',
-      description: 'Weekly study for ages 14-18 exploring the book of Romans',
-    },
-    {
-      id: '3',
-      title: 'Community Prayer Meeting',
-      date: '2024-04-07',
-      time: '7:30 PM',
-      location: 'Prayer Room',
-      description: 'Come together to pray for our church and community',
-    },
-  ]
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchEvents()
+  }, [])
+
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch('/api/public/events')
+      if (response.ok) {
+        const data = await response.json()
+        // Get only the next 3 upcoming events
+        const upcomingEvents = data.events
+          .filter((event: Event) => new Date(event.date) >= new Date())
+          .slice(0, 3)
+        setEvents(upcomingEvents)
+      }
+    } catch (error) {
+      console.error('Failed to fetch events:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-white to-sage/10">
@@ -63,8 +63,22 @@ const UpcomingEvents = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {events.map((event, index) => (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="w-12 h-12 border-4 border-steel-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-charcoal/60">Loading events...</p>
+            </div>
+          </div>
+        ) : events.length === 0 ? (
+          <div className="text-center py-12">
+            <Calendar className="w-12 h-12 text-charcoal/30 mx-auto mb-4" />
+            <p className="text-charcoal/60">No upcoming events at the moment.</p>
+            <p className="text-sm text-charcoal/40 mt-2">Check back soon for updates!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {events.map((event, index) => (
             <motion.div
               key={event.id}
               initial={{ opacity: 0, y: 20 }}
@@ -119,8 +133,9 @@ const UpcomingEvents = () => {
                 </button>
               </div>
             </motion.div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         <motion.div
           initial={{ opacity: 0 }}
