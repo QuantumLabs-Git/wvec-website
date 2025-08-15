@@ -4,10 +4,10 @@ import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 
 const Hero = () => {
-  // REPLACE THESE WITH YOUR YOUTUBE VIDEO IDs
-  const YOUTUBE_VIDEO_DESKTOP = 'YOUR_DESKTOP_VIDEO_ID' // Replace with your YouTube video ID
-  const YOUTUBE_VIDEO_MOBILE = 'YOUR_MOBILE_VIDEO_ID'   // Replace with your YouTube video ID
-  const YOUTUBE_VIDEO_SQUARE = 'YOUR_SQUARE_VIDEO_ID'   // Replace with your YouTube video ID
+  // YouTube video IDs for different screen sizes
+  const YOUTUBE_VIDEO_DESKTOP = 'ulATKownJMc' // Desktop/landscape video
+  const YOUTUBE_VIDEO_MOBILE = 'cZUNNhhdumY'  // Mobile/portrait video (Shorts)
+  const YOUTUBE_VIDEO_SQUARE = 'HP0ymRehOuQ'  // Square/tablet video (Shorts)
   
   const [videoId, setVideoId] = useState<string>('')
   const [showVideo, setShowVideo] = useState(false)
@@ -55,7 +55,7 @@ const Hero = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-steel-blue via-sage to-champagne" />
         
         {/* YouTube iframe - loads after delay for performance */}
-        {showVideo && videoId && videoId !== 'YOUR_DESKTOP_VIDEO_ID' && (
+        {showVideo && videoId && (
           <iframe
             key={videoId}
             src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&rel=0&modestbranding=1&playlist=${videoId}&enablejsapi=1&disablekb=1&fs=0&iv_load_policy=3`}
@@ -70,13 +70,6 @@ const Hero = () => {
             title="Church Welcome Video"
             loading="lazy"
           />
-        )}
-        
-        {/* Fallback message if video IDs not set */}
-        {showVideo && videoId === 'YOUR_DESKTOP_VIDEO_ID' && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-white/50 text-sm">Video coming soon</p>
-          </div>
         )}
         
         {/* Cinematic overlay layers */}
