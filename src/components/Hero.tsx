@@ -4,53 +4,56 @@ import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 
 const Hero = () => {
-  const [videoSrc, setVideoSrc] = useState('/videos/WVEChomepagevideo.mp4')
+  const [videoSrc, setVideoSrc] = useState<string | null>(null)
+  const [showVideo, setShowVideo] = useState(false)
   
   useEffect(() => {
-    const updateVideoSource = () => {
+    // Delay video loading until after initial page load
+    const loadVideo = () => {
       const width = window.innerWidth
       const height = window.innerHeight
       const aspectRatio = width / height
       
+      let selectedVideo = '/videos/WVEChomepagevideo.mp4'
+      
       // For very narrow screens (phones in portrait)
       if (width <= 480 && aspectRatio < 0.75) {
-        setVideoSrc('/videos/WVECHomepageVertical.mp4')
+        selectedVideo = '/videos/WVECHomepageVertical.mp4'
       } 
       // For square-ish screens or tablets
       else if (width <= 768 && aspectRatio < 1.3) {
-        setVideoSrc('/videos/WVECHomepageSquare.mp4')
-      } 
-      // For landscape/desktop
-      else {
-        setVideoSrc('/videos/WVEChomepagevideo.mp4')
+        selectedVideo = '/videos/WVECHomepageSquare.mp4'
       }
+      
+      setVideoSrc(selectedVideo)
+      setShowVideo(true)
     }
     
-    // Set initial video
-    updateVideoSource()
+    // Load video after 2 seconds (after initial page render)
+    const timer = setTimeout(loadVideo, 2000)
     
-    // Update on resize
-    window.addEventListener('resize', updateVideoSource)
-    return () => window.removeEventListener('resize', updateVideoSource)
+    return () => clearTimeout(timer)
   }, [])
   return (
     <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center">
-      {/* Background gradient - temporary while we optimize video */}
+      {/* Background with delayed video loading */}
       <div className="absolute inset-0 w-full h-full overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-steel-blue via-sage to-champagne opacity-90" />
-        {/* Video disabled temporarily for performance - uncomment when optimized
-        <video
-          key={videoSrc}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src={videoSrc} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-        */}
+        {/* Always show gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-steel-blue via-sage to-champagne" />
+        
+        {/* Only load video after delay */}
+        {showVideo && videoSrc && (
+          <video
+            key={videoSrc}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-80"
+          >
+            <source src={videoSrc} type="video/mp4" />
+          </video>
+        )}
         
         {/* Cinematic overlay layers */}
         {/* Base darkening layer */}
