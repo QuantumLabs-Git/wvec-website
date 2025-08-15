@@ -1,0 +1,17 @@
+# Redirects from old Wix site to new structure
+/home                    /                         301
+/about-us               /about                    301
+/about-1                /about                    301
+/whats-on               /events                   301
+/events-1               /events                   301
+/sermons-1              /sermons                  301
+/sermons-and-media      /sermons                  301
+/contact-us             /contact                  301
+/contact-1              /contact                  301
+/what-we-believe        /about/what-we-believe    301
+/our-history            /about/church-history     301
+/service-times          /service-times            301
+/bible-study            /bible-studies            301
+
+# Redirect www to non-www (if needed)
+# https://www.wvec.org.uk/* https://wvec.org.uk/:splat 301

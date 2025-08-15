@@ -19,7 +19,7 @@ export default function robots(): MetadataRoute.Robots {
         crawlDelay: 1,
       },
     ],
-    sitemap: 'https://www.wvec.org.uk/sitemap.xml',
-    host: 'https://www.wvec.org.uk',
+    sitemap: 'https://wvec.org.uk/sitemap.xml',
+    host: 'https://wvec.org.uk',
   }
 }
