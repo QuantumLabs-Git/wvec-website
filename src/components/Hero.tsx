@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const Hero = () => {
   // YouTube video IDs for different screen sizes
@@ -9,8 +9,9 @@ const Hero = () => {
   const YOUTUBE_VIDEO_MOBILE = 'cZUNNhhdumY'  // Mobile/portrait video (Shorts)
   const YOUTUBE_VIDEO_SQUARE = 'HP0ymRehOuQ'  // Square/tablet video (Shorts)
   
-  const [videoId, setVideoId] = useState<string>('')
+  const [videoId, setVideoId] = useState<string>(YOUTUBE_VIDEO_DESKTOP)
   const [showVideo, setShowVideo] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
   
   useEffect(() => {
     // Determine which video to show based on screen size
@@ -36,29 +37,52 @@ const Hero = () => {
     // Select video immediately
     selectVideo()
     
-    // Show video after 1 second (for better performance)
-    const timer = setTimeout(() => setShowVideo(true), 1000)
+    // Use Intersection Observer for lazy loading
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setShowVideo(true)
+        }
+      },
+      { threshold: 0.1 }
+    )
+    
+    if (containerRef.current) {
+      observer.observe(containerRef.current)
+    }
     
     // Update on resize
     window.addEventListener('resize', selectVideo)
     
     return () => {
-      clearTimeout(timer)
+      observer.disconnect()
       window.removeEventListener('resize', selectVideo)
     }
   }, [])
+  
   return (
-    <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center">
-      {/* Background with YouTube video */}
+    <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center" ref={containerRef}>
+      {/* Background with optimized YouTube video */}
       <div className="absolute inset-0 w-full h-full overflow-hidden">
-        {/* Always show gradient background initially */}
+        {/* Gradient background - always visible */}
         <div className="absolute inset-0 bg-gradient-to-br from-steel-blue via-sage to-champagne" />
         
-        {/* YouTube iframe - loads after delay for performance */}
-        {showVideo && videoId && (
+        {/* YouTube thumbnail as placeholder for immediate visual */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `url(https://i.ytimg.com/vi_webp/${videoId}/maxresdefault.webp)`,
+            filter: 'brightness(0.7)',
+            opacity: showVideo ? 0 : 0.8,
+            transition: 'opacity 1s ease-in-out'
+          }}
+        />
+        
+        {/* Optimized YouTube iframe - loads on intersection */}
+        {showVideo && (
           <iframe
             key={videoId}
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&rel=0&modestbranding=1&playlist=${videoId}&enablejsapi=1&disablekb=1&fs=0&iv_load_policy=3`}
+            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&rel=0&modestbranding=1&playlist=${videoId}&enablejsapi=0&disablekb=1&fs=0&iv_load_policy=3&playsinline=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
             className="absolute inset-0 w-full h-full object-cover opacity-80 pointer-events-none"
             style={{ 
               width: '100vw',
@@ -68,7 +92,7 @@ const Hero = () => {
             }}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             title="Church Welcome Video"
-            loading="lazy"
+            loading="eager"
           />
         )}
         
