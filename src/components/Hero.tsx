@@ -110,7 +110,6 @@ const Hero = () => {
           playsInline
           poster={posterSrc}
           preload="none"
-          loading="lazy"
           onLoadedData={handleVideoLoaded}
           aria-hidden="true"
         >
