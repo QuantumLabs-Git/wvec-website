@@ -90,7 +90,7 @@ const Hero = () => {
         {/* Native HTML5 video - best performance and control */}
         <video
           ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover mt-0 sm:mt-20"
           style={{ 
             opacity: 0.85,
             transform: 'scale(1.1)' // Slight zoom for edge coverage
