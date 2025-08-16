@@ -100,9 +100,9 @@ const Hero = () => {
   return (
     <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center" ref={containerRef}>
       {/* Background with optimized native video */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden">
-        {/* Base gradient - always visible for immediate color */}
-        <div className="absolute inset-0 bg-gradient-to-br from-steel-blue via-sage to-champagne" />
+      <div className="absolute inset-0 w-full h-full overflow-hidden bg-black">
+        {/* Base gradient - only visible as fallback */}
+        <div className="absolute inset-0 bg-black" />
         
         {/* Native HTML5 video - best performance and control */}
         <video
@@ -110,7 +110,7 @@ const Hero = () => {
           className="absolute inset-0 w-full h-full object-cover"
           style={{ 
             opacity: isVideoLoaded ? 0.85 : 0,
-            transition: 'opacity 1s ease-in-out',
+            transition: 'opacity 0.5s ease-in-out',
             transform: 'scale(1.1)' // Slight zoom for edge coverage
           }}
           autoPlay
@@ -129,11 +129,11 @@ const Hero = () => {
         {/* Poster image fallback for instant visual */}
         {!isVideoLoaded && (
           <div 
-            className="absolute inset-0 w-full h-full bg-cover bg-center"
+            className="absolute inset-0 w-full h-full bg-black bg-cover bg-center"
             style={{ 
               backgroundImage: `url(${posterSrc})`,
-              opacity: 0.7,
-              filter: 'brightness(0.8) saturate(1.1)',
+              opacity: 0.85,
+              filter: 'brightness(0.9)',
               transform: 'scale(1.1)'
             }}
           />
@@ -161,8 +161,8 @@ const Hero = () => {
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent" />
       </div>
       
-      {/* Fallback gradient pattern */}
-      <div className="absolute inset-0 countryside-gradient -z-10" />
+      {/* Fallback black background */}
+      <div className="absolute inset-0 bg-black -z-10" />
       
       {/* Subtle animated elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
