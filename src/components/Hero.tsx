@@ -4,12 +4,13 @@ import { motion } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 
 const Hero = () => {
-  // YouTube video IDs for different screen sizes
-  const YOUTUBE_VIDEO_DESKTOP = 'ulATKownJMc' // Desktop/landscape video  
-  const YOUTUBE_VIDEO_MOBILE = 'cZUNNhhdumY'  // Mobile/portrait video (Shorts)
-  const YOUTUBE_VIDEO_SQUARE = 'HP0ymRehOuQ'  // Square/tablet video (Shorts)
+  // Vimeo video IDs for different screen sizes
+  // TODO: Replace these with your actual Vimeo video IDs
+  const VIMEO_VIDEO_DESKTOP = '123456789' // Replace with your desktop Vimeo video ID
+  const VIMEO_VIDEO_MOBILE = '987654321'  // Replace with your mobile Vimeo video ID
+  const VIMEO_VIDEO_SQUARE = '456789123'  // Replace with your square Vimeo video ID
   
-  const [videoId, setVideoId] = useState<string>(YOUTUBE_VIDEO_DESKTOP)
+  const [videoId, setVideoId] = useState<string>(VIMEO_VIDEO_DESKTOP)
   const [showVideo, setShowVideo] = useState(false)
   const [thumbnailLoaded, setThumbnailLoaded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -21,15 +22,15 @@ const Hero = () => {
       const height = window.innerHeight
       const aspectRatio = width / height
       
-      let selectedVideoId = YOUTUBE_VIDEO_DESKTOP
+      let selectedVideoId = VIMEO_VIDEO_DESKTOP
       
       // For very narrow screens (phones in portrait)
       if (width <= 480 && aspectRatio < 0.75) {
-        selectedVideoId = YOUTUBE_VIDEO_MOBILE
+        selectedVideoId = VIMEO_VIDEO_MOBILE
       } 
       // For square-ish screens or tablets
       else if (width <= 768 && aspectRatio < 1.3) {
-        selectedVideoId = YOUTUBE_VIDEO_SQUARE
+        selectedVideoId = VIMEO_VIDEO_SQUARE
       }
       
       setVideoId(selectedVideoId)
@@ -67,43 +68,39 @@ const Hero = () => {
   
   return (
     <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center" ref={containerRef}>
-      {/* Background with optimized YouTube video */}
+      {/* Background with Vimeo video */}
       <div className="absolute inset-0 w-full h-full overflow-hidden">
         {/* Base gradient - always visible for immediate color */}
         <div className="absolute inset-0 bg-gradient-to-br from-steel-blue via-sage to-champagne" />
         
-        {/* YouTube thumbnail for instant visual feedback */}
-        {videoId && (
-          <img
-            src={`https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
+        {/* Vimeo thumbnail for instant visual feedback (if using Vimeo Plus/Pro) */}
+        {/* For basic Vimeo accounts, you might want to use a custom thumbnail */}
+        {videoId && !showVideo && (
+          <div 
+            className="absolute inset-0 w-full h-full bg-cover bg-center"
             style={{ 
-              opacity: thumbnailLoaded && !showVideo ? 0.7 : 0,
-              transition: 'opacity 0.8s ease-in-out',
+              backgroundImage: `url(https://vumbnail.com/${videoId}.jpg)`,
+              opacity: 0.7,
               filter: 'brightness(0.8) saturate(1.1)',
-              transform: 'scale(1.1)' // Slight zoom for cinematic feel
+              transform: 'scale(1.1)'
             }}
-            onLoad={() => setThumbnailLoaded(true)}
           />
         )}
         
-        {/* YouTube video - simple working parameters only */}
+        {/* Vimeo video with reliable loop and autoplay */}
         {showVideo && videoId && (
           <iframe
-            key={videoId}
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0`}
+            src={`https://player.vimeo.com/video/${videoId}?background=1&autoplay=1&loop=1&muted=1&controls=0&title=0&byline=0&portrait=0&quality=auto`}
             className="absolute inset-0 w-full h-full pointer-events-none"
             style={{ 
               border: 'none',
               width: '100vw',
               height: '100vh',
-              transform: 'scale(1.2)', // Zoom to hide YouTube UI elements
+              transform: 'scale(1.2)', // Zoom to ensure full coverage
               opacity: 0.85,
               animation: 'fadeIn 2s ease-in-out'
             }}
-            allow="autoplay; encrypted-media"
-            allowFullScreen
+            allow="autoplay; fullscreen; picture-in-picture"
             title="Church Welcome Video"
           />
         )}
