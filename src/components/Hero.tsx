@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 
 const Hero = () => {
   // YouTube video IDs for different screen sizes
@@ -9,13 +9,16 @@ const Hero = () => {
   const YOUTUBE_VIDEO_MOBILE = 'cZUNNhhdumY'  // Mobile/portrait video (Shorts)
   const YOUTUBE_VIDEO_SQUARE = 'HP0ymRehOuQ'  // Square/tablet video (Shorts)
   
+  const [mounted, setMounted] = useState(false)
   const [videoId, setVideoId] = useState<string>(YOUTUBE_VIDEO_DESKTOP)
-  const [showVideo, setShowVideo] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
   
   useEffect(() => {
+    setMounted(true)
+    
     // Determine which video to show based on screen size
     const selectVideo = () => {
+      if (typeof window === 'undefined') return
+      
       const width = window.innerWidth
       const height = window.innerHeight
       const aspectRatio = width / height
@@ -37,86 +40,67 @@ const Hero = () => {
     // Select video immediately
     selectVideo()
     
-    // Since hero is at top of page, show video immediately
-    // Small delay to ensure smooth page load
-    const timer = setTimeout(() => {
-      setShowVideo(true)
-    }, 100)
-    
     // Update on resize
     window.addEventListener('resize', selectVideo)
     
     return () => {
-      clearTimeout(timer)
       window.removeEventListener('resize', selectVideo)
     }
   }, [])
   
   return (
-    <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center" ref={containerRef}>
-      {/* Background with optimized YouTube video */}
+    <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center">
+      {/* Background with YouTube video */}
       <div className="absolute inset-0 w-full h-full overflow-hidden">
         {/* Gradient background - always visible */}
         <div className="absolute inset-0 bg-gradient-to-br from-steel-blue via-sage to-champagne" />
         
-        {/* YouTube thumbnail as placeholder for immediate visual */}
-        {videoId && (
-          <div 
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: `url(https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg)`,
-              filter: 'brightness(0.7)',
-              opacity: showVideo ? 0 : 0.8,
-              transition: 'opacity 1s ease-in-out'
-            }}
-          />
+        {/* YouTube video - only render on client side */}
+        {mounted && (
+          <>
+            {/* YouTube thumbnail as poster */}
+            <img
+              src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+              alt="Church welcome"
+              className="absolute inset-0 w-full h-full object-cover opacity-60"
+              style={{ filter: 'brightness(0.7)' }}
+            />
+            
+            {/* YouTube iframe */}
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}&playsinline=1`}
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              style={{ 
+                border: 'none',
+                width: '100%',
+                height: '100%',
+                opacity: 0.8
+              }}
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+              title="Church Welcome Video"
+            />
+          </>
         )}
         
-        {/* Optimized YouTube iframe - loads after short delay */}
-        {showVideo && videoId && (
-          <iframe
-            key={videoId}
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&rel=0&modestbranding=1&playlist=${videoId}&enablejsapi=0&disablekb=1&fs=0&iv_load_policy=3&playsinline=1`}
-            className="absolute inset-0 w-full h-full object-cover opacity-80 pointer-events-none"
-            style={{ 
-              width: '100vw',
-              height: '100vh',
-              transform: 'scale(1.2)', // Slightly zoom to hide any YouTube UI
-              border: 'none'
-            }}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            title="Church Welcome Video"
-            loading="eager"
-          />
-        )}
-        
-        {/* Cinematic overlay layers */}
-        {/* Base darkening layer */}
+        {/* Overlay layers for cinematic effect */}
         <div className="absolute inset-0 bg-black/20" />
-        
-        {/* Vignette effect - darker edges */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/25" />
-        
-        {/* Center focus gradient - keeps center slightly brighter */}
         <div 
           className="absolute inset-0" 
           style={{
             background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.15) 100%)'
           }}
         />
-        
-        {/* Cinematic color grade - subtle blue/teal tint */}
         <div className="absolute inset-0 bg-deep-navy/5 mix-blend-multiply" />
-        
-        {/* Top fade effect to create smooth transition from navigation */}
         <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/40 to-transparent" />
       </div>
       
-      {/* Fallback gradient (visible if video fails to load) */}
+      {/* Fallback gradient */}
       <div className="absolute inset-0 countryside-gradient -z-10" />
       
-      {/* Animated background shapes - responsive sizes */}
+      {/* Animated background shapes */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
           className="absolute top-10 sm:top-20 left-5 sm:left-10 w-48 sm:w-64 md:w-96 h-48 sm:h-64 md:h-96 bg-sage/20 rounded-full blur-2xl sm:blur-3xl"
@@ -144,6 +128,7 @@ const Hero = () => {
         />
       </div>
 
+      {/* Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-8 sm:py-12">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
