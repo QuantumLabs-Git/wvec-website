@@ -4,15 +4,15 @@ import { motion } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 
 const Hero = () => {
-  // Using S3-hosted videos (replace with CloudFront URL when available)
-  const VIDEO_DESKTOP = 'https://wvec-website-videos.s3.amazonaws.com/videos/hero-desktop.mp4'
-  const VIDEO_MOBILE = 'https://wvec-website-videos.s3.amazonaws.com/videos/hero-mobile.mp4'
-  const VIDEO_SQUARE = 'https://wvec-website-videos.s3.amazonaws.com/videos/hero-square.mp4'
+  // Using CloudFront CDN for optimal global performance
+  const VIDEO_DESKTOP = 'https://d1kn6tkqtghxrg.cloudfront.net/videos/hero-desktop.mp4'
+  const VIDEO_MOBILE = 'https://d1kn6tkqtghxrg.cloudfront.net/videos/hero-mobile.mp4'
+  const VIDEO_SQUARE = 'https://d1kn6tkqtghxrg.cloudfront.net/videos/hero-square.mp4'
   
   // Poster images for instant loading
-  const POSTER_DESKTOP = 'https://wvec-website-videos.s3.amazonaws.com/videos/hero-desktop-poster.jpg'
-  const POSTER_MOBILE = 'https://wvec-website-videos.s3.amazonaws.com/videos/hero-mobile-poster.jpg'
-  const POSTER_SQUARE = 'https://wvec-website-videos.s3.amazonaws.com/videos/hero-square-poster.jpg'
+  const POSTER_DESKTOP = 'https://d1kn6tkqtghxrg.cloudfront.net/videos/hero-desktop-poster.jpg'
+  const POSTER_MOBILE = 'https://d1kn6tkqtghxrg.cloudfront.net/videos/hero-mobile-poster.jpg'
+  const POSTER_SQUARE = 'https://d1kn6tkqtghxrg.cloudfront.net/videos/hero-square-poster.jpg'
   
   const [videoSrc, setVideoSrc] = useState<string>(VIDEO_DESKTOP)
   const [posterSrc, setPosterSrc] = useState<string>(POSTER_DESKTOP)
