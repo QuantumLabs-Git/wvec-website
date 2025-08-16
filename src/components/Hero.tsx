@@ -16,7 +16,6 @@ const Hero = () => {
   
   const [videoSrc, setVideoSrc] = useState<string>(VIDEO_DESKTOP)
   const [posterSrc, setPosterSrc] = useState<string>(POSTER_DESKTOP)
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   
@@ -48,18 +47,13 @@ const Hero = () => {
     // Select video immediately
     selectVideo()
     
-    // Delay video loading to prioritize page content
-    const loadVideo = () => {
-      if (videoRef.current) {
-        videoRef.current.load()
-        videoRef.current.play().catch(() => {
-          console.log('Autoplay was prevented')
-        })
-      }
+    // Start video immediately since we're using preload="none"
+    // The browser will handle loading efficiently
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {
+        console.log('Autoplay was prevented')
+      })
     }
-    
-    // Load video after initial page render
-    const timer = setTimeout(loadVideo, 100)
     
     // Update on resize (with debounce for performance)
     let resizeTimer: NodeJS.Timeout
@@ -73,13 +67,11 @@ const Hero = () => {
     return () => {
       window.removeEventListener('resize', handleResize)
       clearTimeout(resizeTimer)
-      clearTimeout(timer)
     }
   }, [])
   
   // Handle video loaded event
   const handleVideoLoaded = () => {
-    setIsVideoLoaded(true)
     // Ensure video plays
     if (videoRef.current) {
       videoRef.current.play().catch(() => {
@@ -89,9 +81,9 @@ const Hero = () => {
   }
   
   return (
-    <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center" ref={containerRef}>
+    <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center -mt-16 sm:-mt-20" ref={containerRef}>
       {/* Background with optimized native video */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden bg-black">
+      <div className="absolute inset-0 w-full h-full overflow-hidden bg-black pt-16 sm:pt-20">
         {/* Base gradient - only visible as fallback */}
         <div className="absolute inset-0 bg-black" />
         
@@ -100,17 +92,15 @@ const Hero = () => {
           ref={videoRef}
           className="absolute inset-0 w-full h-full object-cover"
           style={{ 
-            opacity: isVideoLoaded ? 0.85 : 0,
-            transition: 'opacity 0.5s ease-in-out',
+            opacity: 0.85,
             transform: 'scale(1.1)' // Slight zoom for edge coverage
           }}
-          autoPlay
           muted
           loop
           playsInline
           poster={posterSrc}
-          preload="none"
-          onLoadedData={handleVideoLoaded}
+          preload="metadata"
+          onCanPlay={handleVideoLoaded}
           aria-hidden="true"
         >
           <source src={videoSrc} type="video/mp4" />
@@ -118,18 +108,7 @@ const Hero = () => {
           <source src={videoSrc.replace('.mp4', '.webm')} type="video/webm" />
         </video>
         
-        {/* Poster image fallback for instant visual */}
-        {!isVideoLoaded && (
-          <div 
-            className="absolute inset-0 w-full h-full bg-black bg-cover bg-center"
-            style={{ 
-              backgroundImage: `url(${posterSrc})`,
-              opacity: 0.85,
-              filter: 'brightness(0.9)',
-              transform: 'scale(1.1)'
-            }}
-          />
-        )}
+        {/* Removed poster fallback to prevent double flash */}
         
         {/* Professional cinematic overlay layers */}
         {/* Base darkening for contrast */}
