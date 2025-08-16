@@ -33,6 +33,9 @@ const Hero = () => {
       }
       
       setVideoId(selectedVideoId)
+      
+      // Debug: Log which video is selected
+      console.log('Selected video ID:', selectedVideoId, 'for screen:', width, 'x', height)
     }
     
     // Select video immediately
@@ -92,7 +95,7 @@ const Hero = () => {
         {showVideo && videoId && (
           <iframe
             key={videoId}
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&playlist=${videoId}`}
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0`}
             className="absolute inset-0 w-full h-full pointer-events-none"
             style={{ 
               border: 'none',
