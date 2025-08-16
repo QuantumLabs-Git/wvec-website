@@ -81,9 +81,9 @@ const Hero = () => {
   }
   
   return (
-    <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center -mt-16 sm:-mt-20" ref={containerRef}>
+    <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center" ref={containerRef}>
       {/* Background with optimized native video */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden bg-black pt-16 sm:pt-20">
+      <div className="absolute inset-0 w-full h-full overflow-hidden bg-black">
         {/* Base gradient - only visible as fallback */}
         <div className="absolute inset-0 bg-black" />
         
