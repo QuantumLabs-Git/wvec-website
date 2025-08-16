@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const Hero = () => {
   // YouTube video IDs for different screen sizes
@@ -9,16 +9,14 @@ const Hero = () => {
   const YOUTUBE_VIDEO_MOBILE = 'cZUNNhhdumY'  // Mobile/portrait video (Shorts)
   const YOUTUBE_VIDEO_SQUARE = 'HP0ymRehOuQ'  // Square/tablet video (Shorts)
   
-  const [mounted, setMounted] = useState(false)
   const [videoId, setVideoId] = useState<string>(YOUTUBE_VIDEO_DESKTOP)
+  const [showVideo, setShowVideo] = useState(false)
+  const [thumbnailLoaded, setThumbnailLoaded] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
   
   useEffect(() => {
-    setMounted(true)
-    
     // Determine which video to show based on screen size
     const selectVideo = () => {
-      if (typeof window === 'undefined') return
-      
       const width = window.innerWidth
       const height = window.innerHeight
       const aspectRatio = width / height
@@ -40,73 +38,109 @@ const Hero = () => {
     // Select video immediately
     selectVideo()
     
+    // Use Intersection Observer for optimal loading
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          // Load video when hero section is visible
+          setTimeout(() => setShowVideo(true), 500) // Small delay for smooth experience
+        }
+      },
+      { 
+        threshold: 0.1,
+        rootMargin: '50px' // Start loading slightly before visible
+      }
+    )
+    
+    if (containerRef.current) {
+      observer.observe(containerRef.current)
+    }
+    
     // Update on resize
     window.addEventListener('resize', selectVideo)
     
     return () => {
+      observer.disconnect()
       window.removeEventListener('resize', selectVideo)
     }
   }, [])
   
   return (
-    <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center">
-      {/* Background with YouTube video */}
+    <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center" ref={containerRef}>
+      {/* Background with optimized YouTube video */}
       <div className="absolute inset-0 w-full h-full overflow-hidden">
-        {/* Gradient background - always visible */}
+        {/* Base gradient - always visible for immediate color */}
         <div className="absolute inset-0 bg-gradient-to-br from-steel-blue via-sage to-champagne" />
         
-        {/* YouTube video - only render on client side */}
-        {mounted && (
-          <>
-            {/* YouTube thumbnail as poster */}
-            <img
-              src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
-              alt="Church welcome"
-              className="absolute inset-0 w-full h-full object-cover opacity-60"
-              style={{ filter: 'brightness(0.7)' }}
-            />
-            
-            {/* YouTube iframe */}
-            <iframe
-              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}&playsinline=1`}
-              className="absolute inset-0 w-full h-full pointer-events-none"
-              style={{ 
-                border: 'none',
-                width: '100%',
-                height: '100%',
-                opacity: 0.8
-              }}
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              title="Church Welcome Video"
-            />
-          </>
+        {/* YouTube thumbnail for instant visual feedback */}
+        {videoId && (
+          <img
+            src={`https://i.ytimg.com/vi_webp/${videoId}/maxresdefault.webp`}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ 
+              opacity: thumbnailLoaded && !showVideo ? 0.7 : 0,
+              transition: 'opacity 0.8s ease-in-out',
+              filter: 'brightness(0.8) saturate(1.1)',
+              transform: 'scale(1.1)' // Slight zoom for cinematic feel
+            }}
+            onLoad={() => setThumbnailLoaded(true)}
+          />
         )}
         
-        {/* Overlay layers for cinematic effect */}
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/25" />
+        {/* YouTube video with performance optimizations */}
+        {showVideo && videoId && (
+          <iframe
+            key={videoId}
+            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&playsinline=1&enablejsapi=0&origin=${typeof window !== 'undefined' ? window.location.origin : ''}&rel=0&showinfo=0&playlist=${videoId}`}
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{ 
+              border: 'none',
+              width: '100vw',
+              height: '100vh',
+              transform: 'scale(1.2)', // Zoom to hide YouTube UI elements
+              opacity: 0.85,
+              animation: 'fadeIn 2s ease-in-out'
+            }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
+            title="Church Welcome Video"
+            loading="lazy"
+          />
+        )}
+        
+        {/* Professional cinematic overlay layers */}
+        {/* Base darkening for contrast */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40" />
+        
+        {/* Vignette effect for focus */}
         <div 
-          className="absolute inset-0" 
+          className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.15) 100%)'
+            background: 'radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.4) 100%)'
           }}
         />
-        <div className="absolute inset-0 bg-deep-navy/5 mix-blend-multiply" />
-        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/40 to-transparent" />
+        
+        {/* Subtle color grading */}
+        <div className="absolute inset-0 bg-deep-navy/10 mix-blend-overlay" />
+        
+        {/* Top gradient for nav blending */}
+        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/50 to-transparent" />
+        
+        {/* Bottom gradient for content readability */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent" />
       </div>
       
-      {/* Fallback gradient */}
+      {/* Fallback gradient pattern */}
       <div className="absolute inset-0 countryside-gradient -z-10" />
       
-      {/* Animated background shapes */}
+      {/* Subtle animated elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="absolute top-10 sm:top-20 left-5 sm:left-10 w-48 sm:w-64 md:w-96 h-48 sm:h-64 md:h-96 bg-sage/20 rounded-full blur-2xl sm:blur-3xl"
+          className="absolute -top-20 -left-20 w-64 sm:w-96 h-64 sm:h-96 bg-champagne/10 rounded-full blur-3xl"
           animate={{
-            x: [0, 30, 0],
-            y: [0, -20, 0],
+            x: [0, 50, 0],
+            y: [0, -30, 0],
+            scale: [1, 1.1, 1],
           }}
           transition={{
             duration: 20,
@@ -115,10 +149,11 @@ const Hero = () => {
           }}
         />
         <motion.div
-          className="absolute bottom-10 sm:bottom-20 right-5 sm:right-10 w-48 sm:w-64 md:w-96 h-48 sm:h-64 md:h-96 bg-steel-blue/10 rounded-full blur-2xl sm:blur-3xl"
+          className="absolute -bottom-20 -right-20 w-64 sm:w-96 h-64 sm:h-96 bg-steel-blue/10 rounded-full blur-3xl"
           animate={{
-            x: [0, -30, 0],
-            y: [0, 20, 0],
+            x: [0, -50, 0],
+            y: [0, 30, 0],
+            scale: [1, 1.2, 1],
           }}
           transition={{
             duration: 25,
@@ -128,27 +163,48 @@ const Hero = () => {
         />
       </div>
 
-      {/* Content */}
+      {/* Hero content with enhanced typography */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-8 sm:py-12">
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-serif text-ivory mb-4 sm:mb-6 px-2"
+          transition={{ 
+            duration: 1,
+            ease: [0.25, 0.46, 0.45, 0.94]
+          }}
+          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-serif text-white mb-4 sm:mb-6 px-2 drop-shadow-2xl"
+          style={{
+            textShadow: '0 2px 20px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.8)'
+          }}
         >
           Whiddon Valley Evangelical Church
         </motion.h1>
 
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-base sm:text-lg md:text-xl lg:text-2xl text-ivory italic max-w-3xl mx-auto px-4"
+          transition={{ 
+            duration: 1,
+            delay: 0.3,
+            ease: [0.25, 0.46, 0.45, 0.94]
+          }}
+          className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/95 italic max-w-3xl mx-auto px-4"
+          style={{
+            textShadow: '0 1px 10px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.8)'
+          }}
         >
           "Grace and peace be multiplied unto you through the knowledge of God, and of Jesus our Lord"
-          <span className="block text-sm sm:text-base mt-2 not-italic text-ivory">2 Peter 1:2</span>
+          <span className="block text-sm sm:text-base mt-2 not-italic text-white/90">2 Peter 1:2</span>
         </motion.p>
       </div>
+      
+      {/* Add fadeIn animation */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 0.85; }
+        }
+      `}</style>
     </section>
   )
 }
