@@ -37,25 +37,17 @@ const Hero = () => {
     // Select video immediately
     selectVideo()
     
-    // Use Intersection Observer for lazy loading
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setShowVideo(true)
-        }
-      },
-      { threshold: 0.1 }
-    )
-    
-    if (containerRef.current) {
-      observer.observe(containerRef.current)
-    }
+    // Since hero is at top of page, show video immediately
+    // Small delay to ensure smooth page load
+    const timer = setTimeout(() => {
+      setShowVideo(true)
+    }, 100)
     
     // Update on resize
     window.addEventListener('resize', selectVideo)
     
     return () => {
-      observer.disconnect()
+      clearTimeout(timer)
       window.removeEventListener('resize', selectVideo)
     }
   }, [])
@@ -68,21 +60,23 @@ const Hero = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-steel-blue via-sage to-champagne" />
         
         {/* YouTube thumbnail as placeholder for immediate visual */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(https://i.ytimg.com/vi_webp/${videoId}/maxresdefault.webp)`,
-            filter: 'brightness(0.7)',
-            opacity: showVideo ? 0 : 0.8,
-            transition: 'opacity 1s ease-in-out'
-          }}
-        />
+        {videoId && (
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: `url(https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg)`,
+              filter: 'brightness(0.7)',
+              opacity: showVideo ? 0 : 0.8,
+              transition: 'opacity 1s ease-in-out'
+            }}
+          />
+        )}
         
-        {/* Optimized YouTube iframe - loads on intersection */}
-        {showVideo && (
+        {/* Optimized YouTube iframe - loads after short delay */}
+        {showVideo && videoId && (
           <iframe
             key={videoId}
-            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&rel=0&modestbranding=1&playlist=${videoId}&enablejsapi=0&disablekb=1&fs=0&iv_load_policy=3&playsinline=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&rel=0&modestbranding=1&playlist=${videoId}&enablejsapi=0&disablekb=1&fs=0&iv_load_policy=3&playsinline=1`}
             className="absolute inset-0 w-full h-full object-cover opacity-80 pointer-events-none"
             style={{ 
               width: '100vw',
