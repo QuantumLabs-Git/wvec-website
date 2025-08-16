@@ -4,14 +4,20 @@ import { motion } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 
 const Hero = () => {
-  // Vimeo video IDs for different screen sizes
-  const VIMEO_VIDEO_DESKTOP = '1110522023' // Desktop/landscape video
-  const VIMEO_VIDEO_MOBILE = '1110522012'  // Mobile/vertical video
-  const VIMEO_VIDEO_SQUARE = '1110522001'  // Square/tablet video
+  // Using compressed videos from local storage
+  const VIDEO_DESKTOP = '/videos/compressed/hero-desktop.mp4'
+  const VIDEO_MOBILE = '/videos/compressed/hero-mobile.mp4'
+  const VIDEO_SQUARE = '/videos/compressed/hero-square.mp4'
   
-  const [videoId, setVideoId] = useState<string>(VIMEO_VIDEO_DESKTOP)
-  const [showVideo, setShowVideo] = useState(false)
-  const [thumbnailLoaded, setThumbnailLoaded] = useState(false)
+  // Poster images for instant loading
+  const POSTER_DESKTOP = '/videos/compressed/hero-desktop-poster.jpg'
+  const POSTER_MOBILE = '/videos/compressed/hero-mobile-poster.jpg'
+  const POSTER_SQUARE = '/videos/compressed/hero-square-poster.jpg'
+  
+  const [videoSrc, setVideoSrc] = useState<string>(VIDEO_DESKTOP)
+  const [posterSrc, setPosterSrc] = useState<string>(POSTER_DESKTOP)
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   
   useEffect(() => {
@@ -21,18 +27,22 @@ const Hero = () => {
       const height = window.innerHeight
       const aspectRatio = width / height
       
-      let selectedVideoId = VIMEO_VIDEO_DESKTOP
+      let selectedVideo = VIDEO_DESKTOP
+      let selectedPoster = POSTER_DESKTOP
       
       // For very narrow screens (phones in portrait)
       if (width <= 480 && aspectRatio < 0.75) {
-        selectedVideoId = VIMEO_VIDEO_MOBILE
+        selectedVideo = VIDEO_MOBILE
+        selectedPoster = POSTER_MOBILE
       } 
       // For square-ish screens or tablets
       else if (width <= 768 && aspectRatio < 1.3) {
-        selectedVideoId = VIMEO_VIDEO_SQUARE
+        selectedVideo = VIDEO_SQUARE
+        selectedPoster = POSTER_SQUARE
       }
       
-      setVideoId(selectedVideoId)
+      setVideoSrc(selectedVideo)
+      setPosterSrc(selectedPoster)
     }
     
     // Select video immediately
@@ -41,14 +51,18 @@ const Hero = () => {
     // Use Intersection Observer for optimal loading
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
-          // Load video when hero section is visible
-          setTimeout(() => setShowVideo(true), 500) // Small delay for smooth experience
+        if (entries[0].isIntersecting && videoRef.current) {
+          // Start loading and playing video when visible
+          videoRef.current.load()
+          videoRef.current.play().catch(() => {
+            // Silently handle autoplay failures (some browsers block it)
+            console.log('Autoplay was prevented')
+          })
         }
       },
       { 
         threshold: 0.1,
-        rootMargin: '50px' // Start loading slightly before visible
+        rootMargin: '50px'
       }
     )
     
@@ -56,51 +70,72 @@ const Hero = () => {
       observer.observe(containerRef.current)
     }
     
-    // Update on resize
-    window.addEventListener('resize', selectVideo)
+    // Update on resize (with debounce for performance)
+    let resizeTimer: NodeJS.Timeout
+    const handleResize = () => {
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(selectVideo, 250)
+    }
+    
+    window.addEventListener('resize', handleResize)
     
     return () => {
       observer.disconnect()
-      window.removeEventListener('resize', selectVideo)
+      window.removeEventListener('resize', handleResize)
+      clearTimeout(resizeTimer)
     }
   }, [])
   
+  // Handle video loaded event
+  const handleVideoLoaded = () => {
+    setIsVideoLoaded(true)
+    // Ensure video plays
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {
+        console.log('Autoplay was prevented')
+      })
+    }
+  }
+  
   return (
     <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center" ref={containerRef}>
-      {/* Background with Vimeo video */}
+      {/* Background with optimized native video */}
       <div className="absolute inset-0 w-full h-full overflow-hidden">
         {/* Base gradient - always visible for immediate color */}
         <div className="absolute inset-0 bg-gradient-to-br from-steel-blue via-sage to-champagne" />
         
-        {/* Vimeo thumbnail for instant visual feedback (if using Vimeo Plus/Pro) */}
-        {/* For basic Vimeo accounts, you might want to use a custom thumbnail */}
-        {videoId && !showVideo && (
+        {/* Native HTML5 video - best performance and control */}
+        <video
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ 
+            opacity: isVideoLoaded ? 0.85 : 0,
+            transition: 'opacity 1s ease-in-out',
+            transform: 'scale(1.1)' // Slight zoom for edge coverage
+          }}
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster={posterSrc}
+          onLoadedData={handleVideoLoaded}
+          aria-hidden="true"
+        >
+          <source src={videoSrc} type="video/mp4" />
+          {/* Add WebM for better browser support and smaller file sizes */}
+          <source src={videoSrc.replace('.mp4', '.webm')} type="video/webm" />
+        </video>
+        
+        {/* Poster image fallback for instant visual */}
+        {!isVideoLoaded && (
           <div 
             className="absolute inset-0 w-full h-full bg-cover bg-center"
             style={{ 
-              backgroundImage: `url(https://vumbnail.com/${videoId}.jpg)`,
+              backgroundImage: `url(${posterSrc})`,
               opacity: 0.7,
               filter: 'brightness(0.8) saturate(1.1)',
               transform: 'scale(1.1)'
             }}
-          />
-        )}
-        
-        {/* Vimeo video with reliable loop and autoplay */}
-        {showVideo && videoId && (
-          <iframe
-            src={`https://player.vimeo.com/video/${videoId}?background=1&autoplay=1&loop=1&muted=1&controls=0&title=0&byline=0&portrait=0&quality=auto`}
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ 
-              border: 'none',
-              width: '100vw',
-              height: '100vh',
-              transform: 'scale(1.2)', // Zoom to ensure full coverage
-              opacity: 0.85,
-              animation: 'fadeIn 2s ease-in-out'
-            }}
-            allow="autoplay; fullscreen; picture-in-picture"
-            title="Church Welcome Video"
           />
         )}
         
