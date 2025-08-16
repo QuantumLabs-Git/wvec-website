@@ -5,10 +5,9 @@ import { useState, useEffect, useRef } from 'react'
 
 const Hero = () => {
   // Vimeo video IDs for different screen sizes
-  // TODO: Replace these with your actual Vimeo video IDs
-  const VIMEO_VIDEO_DESKTOP = '123456789' // Replace with your desktop Vimeo video ID
-  const VIMEO_VIDEO_MOBILE = '987654321'  // Replace with your mobile Vimeo video ID
-  const VIMEO_VIDEO_SQUARE = '456789123'  // Replace with your square Vimeo video ID
+  const VIMEO_VIDEO_DESKTOP = '1110522023' // Desktop/landscape video
+  const VIMEO_VIDEO_MOBILE = '1110522012'  // Mobile/vertical video
+  const VIMEO_VIDEO_SQUARE = '1110522001'  // Square/tablet video
   
   const [videoId, setVideoId] = useState<string>(VIMEO_VIDEO_DESKTOP)
   const [showVideo, setShowVideo] = useState(false)
