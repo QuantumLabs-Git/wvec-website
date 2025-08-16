@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 
 const Hero = () => {
   // YouTube video IDs for different screen sizes
-  const YOUTUBE_VIDEO_DESKTOP = 'ulATKownJMc' // Desktop/landscape video
+  const YOUTUBE_VIDEO_DESKTOP = 'ulATKownJMc' // Desktop/landscape video  
   const YOUTUBE_VIDEO_MOBILE = 'cZUNNhhdumY'  // Mobile/portrait video (Shorts)
   const YOUTUBE_VIDEO_SQUARE = 'HP0ymRehOuQ'  // Square/tablet video (Shorts)
   
@@ -88,11 +88,11 @@ const Hero = () => {
           />
         )}
         
-        {/* YouTube video with working parameters including loop */}
+        {/* YouTube video - simple working parameters only */}
         {showVideo && videoId && (
           <iframe
             key={videoId}
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}`}
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0`}
             className="absolute inset-0 w-full h-full pointer-events-none"
             style={{ 
               border: 'none',
