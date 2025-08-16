@@ -46,7 +46,7 @@ const UpcomingEvents = () => {
   }
 
   return (
-    <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-white to-sage/10">
+    <section className="py-12 sm:py-16 md:py-20 bg-black">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0 }}
@@ -55,10 +55,10 @@ const UpcomingEvents = () => {
           viewport={{ once: true }}
           className="text-center mb-8 sm:mb-12"
         >
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-charcoal mb-3 sm:mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-white mb-3 sm:mb-4">
             Upcoming Events
           </h2>
-          <p className="text-sm sm:text-base text-charcoal/70">
+          <p className="text-sm sm:text-base text-white/70">
             Join us for worship, fellowship, and growth
           </p>
         </motion.div>
@@ -66,15 +66,15 @@ const UpcomingEvents = () => {
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="w-12 h-12 border-4 border-steel-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-charcoal/60">Loading events...</p>
+              <div className="w-12 h-12 border-4 border-champagne border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-white/60">Loading events...</p>
             </div>
           </div>
         ) : events.length === 0 ? (
           <div className="text-center py-12">
-            <Calendar className="w-12 h-12 text-charcoal/30 mx-auto mb-4" />
-            <p className="text-charcoal/60">No upcoming events at the moment.</p>
-            <p className="text-sm text-charcoal/40 mt-2">Check back soon for updates!</p>
+            <Calendar className="w-12 h-12 text-white/30 mx-auto mb-4" />
+            <p className="text-white/60">No upcoming events at the moment.</p>
+            <p className="text-sm text-white/40 mt-2">Check back soon for updates!</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -85,9 +85,9 @@ const UpcomingEvents = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="glass-effect rounded-lg sm:rounded-xl overflow-hidden hover:shadow-lg smooth-transition group"
+              className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg sm:rounded-xl overflow-hidden hover:shadow-lg smooth-transition group"
             >
-              <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-sage/20 to-steel-blue/20">
+              <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-black to-white/10">
                 {event.image ? (
                   <Image
                     src={event.image}
@@ -108,10 +108,10 @@ const UpcomingEvents = () => {
                 )}
               </div>
               <div className="p-4 sm:p-5 md:p-6">
-                <h3 className="font-semibold text-lg sm:text-xl text-charcoal mb-2 sm:mb-3">
+                <h3 className="font-semibold text-lg sm:text-xl text-white mb-2 sm:mb-3">
                   {event.title}
                 </h3>
-                <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-charcoal/70 mb-3 sm:mb-4">
+                <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-white/70 mb-3 sm:mb-4">
                   <div className="flex items-start sm:items-center space-x-2">
                     <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 mt-0.5 sm:mt-0" />
                     <span className="line-clamp-2">{format(new Date(event.date), 'EEEE, d MMMM yyyy')}</span>
@@ -125,10 +125,10 @@ const UpcomingEvents = () => {
                     <span>{event.location}</span>
                   </div>
                 </div>
-                <p className="text-xs sm:text-sm text-charcoal/60 mb-3 sm:mb-4 line-clamp-2">
+                <p className="text-xs sm:text-sm text-white/60 mb-3 sm:mb-4 line-clamp-2">
                   {event.description}
                 </p>
-                <button className="text-sm sm:text-base text-steel-blue hover:text-cyber-teal smooth-transition font-medium">
+                <button className="text-sm sm:text-base text-champagne hover:text-champagne/80 smooth-transition font-medium">
                   Add to Calendar
                 </button>
               </div>
@@ -146,7 +146,7 @@ const UpcomingEvents = () => {
         >
           <Link
             href="/events"
-            className="inline-flex items-center space-x-2 bg-steel-blue text-white px-5 py-2.5 sm:px-6 sm:py-3 rounded-full hover:bg-cyber-teal smooth-transition text-sm sm:text-base"
+            className="inline-flex items-center space-x-2 bg-champagne text-black px-5 py-2.5 sm:px-6 sm:py-3 rounded-full hover:bg-champagne/80 smooth-transition text-sm sm:text-base"
           >
             <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>View All Events</span>

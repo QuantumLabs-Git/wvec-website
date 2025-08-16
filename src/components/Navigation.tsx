@@ -83,7 +83,7 @@ const Navigation = () => {
   ]
 
   return (
-    <nav className="fixed w-full z-50 glass-effect border-b border-white/10">
+    <nav className="fixed w-full z-50 bg-black border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 sm:h-20">
           <div className="flex items-center">
@@ -117,7 +117,7 @@ const Navigation = () => {
                   </>
                 )}
               </div>
-              <span className="font-serif text-lg sm:text-xl text-charcoal hidden xs:block">
+              <span className="font-serif text-lg sm:text-xl text-white hidden xs:block">
                 WVEC
               </span>
             </Link>
@@ -134,7 +134,7 @@ const Navigation = () => {
               >
                 <Link
                   href={item.href}
-                  className="flex items-center space-x-1 text-charcoal hover:text-steel-blue smooth-transition font-medium"
+                  className="flex items-center space-x-1 text-white hover:text-champagne smooth-transition font-medium"
                 >
                   <span>{item.name}</span>
                   {item.dropdown && <ChevronDown className="w-4 h-4" />}
@@ -147,7 +147,7 @@ const Navigation = () => {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full left-0 mt-2 w-64 glass-effect rounded-lg shadow-lg overflow-hidden"
+                      className="absolute top-full left-0 mt-2 w-64 bg-black/90 backdrop-blur-lg rounded-lg shadow-lg overflow-hidden border border-white/10"
                     >
                       {item.dropdown.map((subItem) => (
                         <Link
@@ -169,7 +169,7 @@ const Navigation = () => {
           <div className="lg:hidden flex items-center">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="relative z-50 p-2 -mr-2 text-charcoal hover:text-steel-blue smooth-transition touch-manipulation"
+              className="relative z-50 p-2 -mr-2 text-white hover:text-champagne smooth-transition touch-manipulation"
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
               type="button"
             >
@@ -187,7 +187,7 @@ const Navigation = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed inset-0 top-16 sm:top-20 lg:hidden bg-white/95 backdrop-blur-lg overflow-y-auto z-40"
+            className="fixed inset-0 top-16 sm:top-20 lg:hidden bg-black/95 backdrop-blur-lg overflow-y-auto z-40"
           >
             <div className="px-4 py-6 space-y-1">
               {navItems.map((item) => (
@@ -195,7 +195,7 @@ const Navigation = () => {
                   {item.dropdown ? (
                     <button
                       onClick={() => toggleMobileDropdown(item.name)}
-                      className="w-full flex items-center justify-between px-4 py-3 text-charcoal hover:bg-steel-blue/10 rounded-lg smooth-transition font-medium"
+                      className="w-full flex items-center justify-between px-4 py-3 text-white hover:bg-white/10 rounded-lg smooth-transition font-medium"
                     >
                       <span>{item.name}</span>
                       <ChevronDown 
@@ -207,7 +207,7 @@ const Navigation = () => {
                   ) : (
                     <Link
                       href={item.href}
-                      className="block px-4 py-3 text-charcoal hover:bg-steel-blue/10 rounded-lg smooth-transition font-medium"
+                      className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg smooth-transition font-medium"
                       onClick={() => setIsOpen(false)}
                     >
                       {item.name}
@@ -227,7 +227,7 @@ const Navigation = () => {
                             <Link
                               key={subItem.name}
                               href={subItem.href}
-                              className="block px-4 py-2 text-sm text-charcoal/80 hover:bg-steel-blue/5 rounded-lg smooth-transition"
+                              className="block px-4 py-2 text-sm text-white/80 hover:bg-white/5 rounded-lg smooth-transition"
                               onClick={() => setIsOpen(false)}
                             >
                               {subItem.name}

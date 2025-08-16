@@ -27,7 +27,7 @@ const YouTubeSection = () => {
 
 
   return (
-    <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-ivory to-white">
+    <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-white via-ivory to-champagne/20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0 }}
