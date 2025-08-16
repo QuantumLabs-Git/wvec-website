@@ -75,7 +75,7 @@ const Hero = () => {
         {/* YouTube thumbnail for instant visual feedback */}
         {videoId && (
           <img
-            src={`https://i.ytimg.com/vi_webp/${videoId}/maxresdefault.webp`}
+            src={`https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
             style={{ 
@@ -88,11 +88,11 @@ const Hero = () => {
           />
         )}
         
-        {/* YouTube video with performance optimizations */}
+        {/* YouTube video with working parameters */}
         {showVideo && videoId && (
           <iframe
             key={videoId}
-            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&modestbranding=1&playsinline=1&enablejsapi=0&origin=${typeof window !== 'undefined' ? window.location.origin : ''}&rel=0&showinfo=0&playlist=${videoId}`}
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&playlist=${videoId}`}
             className="absolute inset-0 w-full h-full pointer-events-none"
             style={{ 
               border: 'none',
@@ -102,9 +102,9 @@ const Hero = () => {
               opacity: 0.85,
               animation: 'fadeIn 2s ease-in-out'
             }}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
+            allow="autoplay; encrypted-media"
+            allowFullScreen
             title="Church Welcome Video"
-            loading="lazy"
           />
         )}
         
