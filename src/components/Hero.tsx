@@ -90,10 +90,11 @@ const Hero = () => {
         {/* Native HTML5 video - best performance and control */}
         <video
           ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover mt-0 sm:mt-20"
+          className="absolute inset-0 w-full h-full object-cover"
           style={{ 
             opacity: 0.85,
-            transform: 'scale(1.1)' // Slight zoom for edge coverage
+            transform: 'scale(1.1)', // Slight zoom for edge coverage
+            objectPosition: 'center top' // Align video to top
           }}
           muted
           loop
