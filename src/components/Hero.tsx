@@ -48,27 +48,18 @@ const Hero = () => {
     // Select video immediately
     selectVideo()
     
-    // Use Intersection Observer for optimal loading
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && videoRef.current) {
-          // Start loading and playing video when visible
-          videoRef.current.load()
-          videoRef.current.play().catch(() => {
-            // Silently handle autoplay failures (some browsers block it)
-            console.log('Autoplay was prevented')
-          })
-        }
-      },
-      { 
-        threshold: 0.1,
-        rootMargin: '50px'
+    // Delay video loading to prioritize page content
+    const loadVideo = () => {
+      if (videoRef.current) {
+        videoRef.current.load()
+        videoRef.current.play().catch(() => {
+          console.log('Autoplay was prevented')
+        })
       }
-    )
-    
-    if (containerRef.current) {
-      observer.observe(containerRef.current)
     }
+    
+    // Load video after initial page render
+    const timer = setTimeout(loadVideo, 100)
     
     // Update on resize (with debounce for performance)
     let resizeTimer: NodeJS.Timeout
@@ -80,9 +71,9 @@ const Hero = () => {
     window.addEventListener('resize', handleResize)
     
     return () => {
-      observer.disconnect()
       window.removeEventListener('resize', handleResize)
       clearTimeout(resizeTimer)
+      clearTimeout(timer)
     }
   }, [])
   
@@ -118,6 +109,8 @@ const Hero = () => {
           loop
           playsInline
           poster={posterSrc}
+          preload="none"
+          loading="lazy"
           onLoadedData={handleVideoLoaded}
           aria-hidden="true"
         >

@@ -10,7 +10,8 @@ const nextConfig = {
     SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY,
   },
   images: {
-    domains: ['i.ytimg.com'],
+    domains: ['i.ytimg.com', 'd1kn6tkqtghxrg.cloudfront.net'],
+    formats: ['image/avif', 'image/webp'],
   },
 }
 

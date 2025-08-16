@@ -153,7 +153,7 @@ const Navigation = () => {
                         <Link
                           key={subItem.name}
                           href={subItem.href}
-                          className="block px-4 py-3 text-charcoal hover:bg-steel-blue/10 smooth-transition"
+                          className="block px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 smooth-transition"
                         >
                           {subItem.name}
                         </Link>
