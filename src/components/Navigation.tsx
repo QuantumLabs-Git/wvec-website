@@ -48,7 +48,7 @@ const Navigation = () => {
   const navItems = [
     { name: 'HOME', href: '/' },
     { name: 'EVENTS', href: '/events' },
-    { name: 'WVGM-4', href: '/wvgm-4' },
+    // { name: 'WVGM-4', href: '/wvgm-4' }, // Temporarily hidden - can be restored later
     { name: 'BIBLE', href: '/bible' },
     {
       name: 'ABOUT US',
