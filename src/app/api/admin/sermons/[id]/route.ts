@@ -10,9 +10,11 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 // PATCH - Update sermon
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+    
     // Verify admin token
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.replace('Bearer ', '')
@@ -33,7 +35,7 @@ export async function PATCH(
     const { data, error } = await supabase
       .from('sermons')
       .update(body)
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single()
 
@@ -55,9 +57,11 @@ export async function PATCH(
 // DELETE - Delete sermon
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+    
     // Verify admin token
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.replace('Bearer ', '')
@@ -76,7 +80,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('sermons')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
 
     if (error) {
       console.error('Supabase error:', error)
