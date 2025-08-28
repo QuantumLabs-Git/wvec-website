@@ -5,14 +5,14 @@ import jwt from 'jsonwebtoken'
 
 // Initialize S3 client
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'eu-west-2',
+  region: process.env.S3_REGION || process.env.AWS_REGION || 'us-east-2',
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY!,
   },
 })
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || 'wvec-sermons'
+const BUCKET_NAME = process.env.S3_BUCKET_NAME || process.env.AWS_S3_BUCKET_NAME || 'wvec-sermons'
 const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
 
 export async function POST(request: Request) {
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 })
 
     // The public URL where the file will be accessible
-    const publicUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'eu-west-2'}.amazonaws.com/${key}`
+    const publicUrl = `https://${BUCKET_NAME}.s3.${process.env.S3_REGION || process.env.AWS_REGION || 'us-east-2'}.amazonaws.com/${key}`
 
     return NextResponse.json({
       uploadUrl,
