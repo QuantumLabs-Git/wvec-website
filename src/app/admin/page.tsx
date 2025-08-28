@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Calendar, FileText, Edit3, Users, TrendingUp, Clock } from 'lucide-react'
+import { Calendar, FileText, Edit3, Users, TrendingUp, Clock, Mic } from 'lucide-react'
 import Link from 'next/link'
 
 interface DashboardStats {
@@ -56,6 +56,13 @@ export default function AdminDashboard() {
       icon: FileText,
       href: '/admin/articles/new',
       color: 'bg-sage'
+    },
+    {
+      title: 'Upload Sermon',
+      description: 'Add a new sermon recording',
+      icon: Mic,
+      href: '/admin/sermons/new',
+      color: 'bg-deep-navy'
     },
     {
       title: 'Edit Homepage',
@@ -149,6 +156,37 @@ export default function AdminDashboard() {
               </Link>
             )
           })}
+        </div>
+      </div>
+
+      {/* Content Management */}
+      <div className="mb-8">
+        <h2 className="text-xl font-serif text-charcoal mb-4">Content Management</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link
+            href="/admin/events"
+            className="glass-effect rounded-xl p-6 hover:shadow-lg smooth-transition"
+          >
+            <Calendar className="w-8 h-8 text-steel-blue mb-3" />
+            <h3 className="font-semibold text-charcoal mb-1">Manage Events</h3>
+            <p className="text-sm text-charcoal/60">View and edit all events</p>
+          </Link>
+          <Link
+            href="/admin/articles"
+            className="glass-effect rounded-xl p-6 hover:shadow-lg smooth-transition"
+          >
+            <FileText className="w-8 h-8 text-sage mb-3" />
+            <h3 className="font-semibold text-charcoal mb-1">Manage Articles</h3>
+            <p className="text-sm text-charcoal/60">View and edit all articles</p>
+          </Link>
+          <Link
+            href="/admin/sermons"
+            className="glass-effect rounded-xl p-6 hover:shadow-lg smooth-transition"
+          >
+            <Mic className="w-8 h-8 text-deep-navy mb-3" />
+            <h3 className="font-semibold text-charcoal mb-1">Manage Sermons</h3>
+            <p className="text-sm text-charcoal/60">View and upload sermons</p>
+          </Link>
         </div>
       </div>
 

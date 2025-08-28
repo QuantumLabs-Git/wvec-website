@@ -10,67 +10,56 @@ interface Sermon {
   title: string
   speaker: string
   date: string
-  duration: string
-  scripture: string
-  audioUrl?: string
+  duration?: string
+  scripture?: string
+  audio_url?: string
+  description?: string
+  sermon_type?: string
 }
 
-// Placeholder sermons - these would come from your CMS/database
-const sermons: Sermon[] = [
-  {
-    id: '1',
-    title: 'The Glory of the Gospel',
-    speaker: 'Pastor David Kay',
-    date: '2024-03-17',
-    duration: '45:23',
-    scripture: 'Romans 1:16-17',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Placeholder audio
-  },
-  {
-    id: '2',
-    title: 'Walking in the Light',
-    speaker: 'Pastor David Kay',
-    date: '2024-03-10',
-    duration: '38:15',
-    scripture: '1 John 1:5-10',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', // Placeholder audio
-  },
-  {
-    id: '3',
-    title: 'The Sufficiency of Scripture',
-    speaker: 'Elder John Smith',
-    date: '2024-03-03',
-    duration: '42:30',
-    scripture: '2 Timothy 3:16-17',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', // Placeholder audio
-  },
-  {
-    id: '4',
-    title: 'Christ Our Passover',
-    speaker: 'Pastor David Kay',
-    date: '2024-02-25',
-    duration: '40:45',
-    scripture: '1 Corinthians 5:7-8',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', // Placeholder audio
-  },
-]
-
 export default function ListenPage() {
-  const [selectedYear, setSelectedYear] = useState('2024')
+  const [sermons, setSermons] = useState<Sermon[]>([])
+  const [availableYears, setAvailableYears] = useState<number[]>([])
+  const [availableSpeakers, setAvailableSpeakers] = useState<string[]>([])
+  const [selectedYear, setSelectedYear] = useState<string>('')
   const [selectedSpeaker, setSelectedSpeaker] = useState('All')
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState<{ [key: string]: number }>({})
   const [duration, setDuration] = useState<{ [key: string]: number }>({})
+  const [loading, setLoading] = useState(true)
   const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({})
 
-  const years = ['2024', '2023', '2022', '2021']
-  const speakers = ['All', 'Pastor David Kay', 'Elder John Smith']
+  useEffect(() => {
+    fetchSermons()
+  }, [selectedYear, selectedSpeaker])
 
-  const filteredSermons = sermons.filter(sermon => {
-    const yearMatch = sermon.date.startsWith(selectedYear)
-    const speakerMatch = selectedSpeaker === 'All' || sermon.speaker === selectedSpeaker
-    return yearMatch && speakerMatch
-  })
+  const fetchSermons = async () => {
+    try {
+      setLoading(true)
+      const params = new URLSearchParams({
+        type: 'audio',
+        ...(selectedYear && { year: selectedYear }),
+        ...(selectedSpeaker !== 'All' && { speaker: selectedSpeaker })
+      })
+      
+      const response = await fetch(`/api/sermons?${params}`)
+      const data = await response.json()
+      
+      setSermons(data.sermons || [])
+      
+      // Set available filters
+      if (!selectedYear && data.years?.length > 0) {
+        setSelectedYear(data.years[0].toString())
+      }
+      setAvailableYears(data.years || [])
+      setAvailableSpeakers(data.speakers || [])
+    } catch (error) {
+      console.error('Failed to fetch sermons:', error)
+      setSermons([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handlePlayPause = (sermonId: string) => {
     const audio = audioRefs.current[sermonId]
@@ -104,6 +93,17 @@ export default function ListenPage() {
     const mins = Math.floor(seconds / 60)
     const secs = Math.floor(seconds % 60)
     return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const formatSermonType = (type?: string) => {
+    switch(type) {
+      case 'lords-day':
+        return "Lord's Day Reading"
+      case 'special':
+        return 'Special Service'
+      default:
+        return 'Regular Service'
+    }
   }
 
   useEffect(() => {
@@ -144,58 +144,73 @@ export default function ListenPage() {
       </section>
 
       {/* Filters */}
-      <section className="py-8 bg-white border-b border-sage/20">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex items-center space-x-4">
-              <label className="text-charcoal font-medium">Year:</label>
-              <div className="flex gap-2">
-                {years.map(year => (
-                  <button
-                    key={year}
-                    onClick={() => setSelectedYear(year)}
-                    className={`px-4 py-2 rounded-full smooth-transition ${
-                      selectedYear === year
-                        ? 'bg-steel-blue text-white'
-                        : 'bg-sage/10 text-charcoal hover:bg-sage/20'
-                    }`}
-                  >
-                    {year}
-                  </button>
-                ))}
-              </div>
-            </div>
+      {!loading && (availableYears.length > 0 || availableSpeakers.length > 0) && (
+        <section className="py-8 bg-white border-b border-sage/20">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              {availableYears.length > 0 && (
+                <div className="flex items-center space-x-4">
+                  <label className="text-charcoal font-medium">Year:</label>
+                  <div className="flex gap-2">
+                    {availableYears.map(year => (
+                      <button
+                        key={year}
+                        onClick={() => setSelectedYear(year.toString())}
+                        className={`px-4 py-2 rounded-full smooth-transition ${
+                          selectedYear === year.toString()
+                            ? 'bg-steel-blue text-white'
+                            : 'bg-sage/10 text-charcoal hover:bg-sage/20'
+                        }`}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-            <div className="flex items-center space-x-4">
-              <label className="text-charcoal font-medium">Speaker:</label>
-              <select
-                value={selectedSpeaker}
-                onChange={(e) => setSelectedSpeaker(e.target.value)}
-                className="px-4 py-2 rounded-full border border-sage/30 focus:outline-none focus:border-steel-blue"
-              >
-                {speakers.map(speaker => (
-                  <option key={speaker} value={speaker}>{speaker}</option>
-                ))}
-              </select>
+              {availableSpeakers.length > 1 && (
+                <div className="flex items-center space-x-4">
+                  <label className="text-charcoal font-medium">Speaker:</label>
+                  <select
+                    value={selectedSpeaker}
+                    onChange={(e) => setSelectedSpeaker(e.target.value)}
+                    className="px-4 py-2 rounded-full border border-sage/30 focus:outline-none focus:border-steel-blue"
+                  >
+                    <option value="All">All Speakers</option>
+                    {availableSpeakers.map(speaker => (
+                      <option key={speaker} value={speaker}>{speaker}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Sermons List */}
       <section className="py-12">
         <div className="max-w-6xl mx-auto px-4">
-          {filteredSermons.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="w-12 h-12 border-4 border-steel-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-charcoal/60">Loading sermons...</p>
+            </div>
+          ) : sermons.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-center py-20"
             >
               <p className="text-charcoal/50 text-lg">No sermons found for the selected filters</p>
+              <p className="text-charcoal/40 text-sm mt-2">
+                Audio sermons will appear here once they are uploaded by the admin.
+              </p>
             </motion.div>
           ) : (
             <div className="space-y-4">
-              {filteredSermons.map((sermon, index) => (
+              {sermons.map((sermon, index) => (
                 <motion.div
                   key={sermon.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -209,9 +224,16 @@ export default function ListenPage() {
                         <h3 className="text-xl font-semibold text-charcoal mb-2">
                           {sermon.title}
                         </h3>
-                        <p className="text-steel-blue font-medium mb-3">
-                          {sermon.scripture}
-                        </p>
+                        {sermon.scripture && (
+                          <p className="text-steel-blue font-medium mb-3">
+                            {sermon.scripture}
+                          </p>
+                        )}
+                        {sermon.description && (
+                          <p className="text-charcoal/60 mb-3">
+                            {sermon.description}
+                          </p>
+                        )}
                         <div className="flex flex-wrap gap-4 text-sm text-charcoal/60">
                           <div className="flex items-center space-x-1">
                             <User className="w-4 h-4" />
@@ -221,45 +243,56 @@ export default function ListenPage() {
                             <Calendar className="w-4 h-4" />
                             <span>{new Date(sermon.date).toLocaleDateString('en-GB')}</span>
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <Clock className="w-4 h-4" />
-                            <span>{sermon.duration}</span>
-                          </div>
+                          {sermon.duration && (
+                            <div className="flex items-center space-x-1">
+                              <Clock className="w-4 h-4" />
+                              <span>{sermon.duration}</span>
+                            </div>
+                          )}
+                          {sermon.sermon_type && (
+                            <span className="px-2 py-1 bg-champagne/30 rounded-full text-xs">
+                              {formatSermonType(sermon.sermon_type)}
+                            </span>
+                          )}
                         </div>
                       </div>
 
                       <div className="flex items-center space-x-3 mt-4 md:mt-0">
-                        <button 
-                          onClick={() => handlePlayPause(sermon.id)}
-                          className="flex items-center space-x-2 bg-steel-blue text-white px-4 py-2 rounded-full hover:bg-cyber-teal smooth-transition"
-                          disabled={!sermon.audioUrl}
-                        >
-                          {playingId === sermon.id ? (
-                            <><Pause className="w-4 h-4" /><span>Pause</span></>
-                          ) : (
-                            <><Play className="w-4 h-4" /><span>Play</span></>
-                          )}
-                        </button>
-                        {sermon.audioUrl && (
-                          <a 
-                            href={sermon.audioUrl}
-                            download
-                            className="flex items-center space-x-2 text-charcoal/60 hover:text-steel-blue smooth-transition"
-                          >
-                            <Download className="w-5 h-5" />
-                          </a>
+                        {sermon.audio_url ? (
+                          <>
+                            <button 
+                              onClick={() => handlePlayPause(sermon.id)}
+                              className="flex items-center space-x-2 bg-steel-blue text-white px-4 py-2 rounded-full hover:bg-cyber-teal smooth-transition"
+                            >
+                              {playingId === sermon.id ? (
+                                <><Pause className="w-4 h-4" /><span>Pause</span></>
+                              ) : (
+                                <><Play className="w-4 h-4" /><span>Play</span></>
+                              )}
+                            </button>
+                            <a 
+                              href={sermon.audio_url}
+                              download
+                              className="flex items-center space-x-2 text-charcoal/60 hover:text-steel-blue smooth-transition"
+                              title="Download Audio"
+                            >
+                              <Download className="w-5 h-5" />
+                            </a>
+                          </>
+                        ) : (
+                          <span className="text-charcoal/40 text-sm">Audio not available</span>
                         )}
                       </div>
                     </div>
 
                     {/* Audio Player */}
-                    {sermon.audioUrl && (
+                    {sermon.audio_url && (
                       <>
                         <audio
                           ref={el => {
                             if (el) audioRefs.current[sermon.id] = el
                           }}
-                          src={sermon.audioUrl}
+                          src={sermon.audio_url}
                           onTimeUpdate={(e) => handleTimeUpdate(sermon.id, e.currentTarget.currentTime)}
                           onLoadedMetadata={(e) => handleLoadedMetadata(sermon.id, e.currentTarget.duration)}
                           onEnded={() => setPlayingId(null)}
