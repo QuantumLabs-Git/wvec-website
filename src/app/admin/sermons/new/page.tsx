@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Upload, Calendar, User, Book, Clock, FileAudio } from 'lucide-react'
+import { ArrowLeft, Upload, Calendar, User, Book, Clock, FileAudio, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function NewSermon() {
@@ -19,8 +19,106 @@ export default function NewSermon() {
     is_published: false
   })
   const [loading, setLoading] = useState(false)
+  const [uploadingAudio, setUploadingAudio] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState('')
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.includes('audio')) {
+      setError('Please select an audio file (MP3, WAV, etc.)')
+      return
+    }
+
+    // Validate file size (100MB limit)
+    const maxSize = 100 * 1024 * 1024 // 100MB
+    if (file.size > maxSize) {
+      setError('File size must be less than 100MB')
+      return
+    }
+
+    setUploadingAudio(true)
+    setUploadProgress(0)
+    setError('')
+
+    try {
+      // Step 1: Get pre-signed URL from our API
+      const response = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to get upload URL')
+      }
+
+      const { uploadUrl, publicUrl } = await response.json()
+
+      // Step 2: Upload file directly to S3
+      const xhr = new XMLHttpRequest()
+
+      // Track upload progress
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100)
+          setUploadProgress(percentComplete)
+        }
+      })
+
+      // Handle upload completion
+      await new Promise((resolve, reject) => {
+        xhr.onload = () => {
+          if (xhr.status === 200 || xhr.status === 204) {
+            resolve(xhr.response)
+          } else {
+            reject(new Error(`Upload failed with status: ${xhr.status}`))
+          }
+        }
+        xhr.onerror = () => reject(new Error('Upload failed'))
+
+        xhr.open('PUT', uploadUrl)
+        xhr.setRequestHeader('Content-Type', file.type)
+        xhr.send(file)
+      })
+
+      // Step 3: Update form with the public URL
+      setFormData(prev => ({ ...prev, audio_url: publicUrl }))
+      
+      // Extract duration if possible (for display purposes)
+      const audio = new Audio()
+      audio.src = URL.createObjectURL(file)
+      audio.addEventListener('loadedmetadata', () => {
+        const duration = Math.floor(audio.duration)
+        const minutes = Math.floor(duration / 60)
+        const seconds = duration % 60
+        setFormData(prev => ({ 
+          ...prev, 
+          duration: `${minutes}:${seconds.toString().padStart(2, '0')}`
+        }))
+      })
+
+    } catch (err) {
+      console.error('Upload error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to upload audio file')
+    } finally {
+      setUploadingAudio(false)
+      setUploadProgress(0)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,7 +129,7 @@ export default function NewSermon() {
       const response = await fetch('/api/admin/sermons', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(formData)
@@ -179,23 +277,73 @@ export default function NewSermon() {
               </select>
             </div>
 
-            {/* Audio URL */}
+            {/* Audio Upload Section */}
             <div className="md:col-span-2">
               <label className="block text-charcoal font-medium mb-2">
                 <FileAudio className="w-4 h-4 inline mr-2" />
-                Audio File URL
+                Audio File
               </label>
-              <input
-                type="url"
-                name="audio_url"
-                value={formData.audio_url}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue focus:border-transparent"
-                placeholder="https://example.com/sermon.mp3"
-              />
-              <p className="text-sm text-charcoal/60 mt-1">
-                Upload your audio to a service like Dropbox, Google Drive, or S3, and paste the direct link here
-              </p>
+              
+              <div className="space-y-4">
+                {/* Upload Button */}
+                <div className="flex items-center gap-4">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="audio/*"
+                    onChange={handleAudioUpload}
+                    className="hidden"
+                    disabled={uploadingAudio}
+                  />
+                  
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAudio}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-steel-blue text-white rounded-lg hover:bg-cyber-teal transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {uploadingAudio ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4" />
+                        Upload MP3
+                      </>
+                    )}
+                  </button>
+
+                  {/* Progress Bar */}
+                  {uploadingAudio && (
+                    <div className="flex-1">
+                      <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div 
+                          className="bg-steel-blue h-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-sm text-charcoal/60 mt-1">{uploadProgress}% uploaded</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* URL Input (for manual entry or display) */}
+                <div>
+                  <input
+                    type="url"
+                    name="audio_url"
+                    value={formData.audio_url}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-steel-blue focus:border-transparent"
+                    placeholder="Or paste audio URL directly"
+                  />
+                  <p className="text-sm text-charcoal/60 mt-1">
+                    Upload an MP3 file or provide a direct URL to the audio
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Description */}
@@ -238,7 +386,7 @@ export default function NewSermon() {
             </Link>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || uploadingAudio}
               className="px-6 py-3 bg-steel-blue text-white rounded-lg hover:bg-cyber-teal transition-colors disabled:opacity-50"
             >
               {loading ? (
@@ -257,16 +405,17 @@ export default function NewSermon() {
         <div className="mt-8 bg-blue-50 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-charcoal mb-3">
             <Upload className="w-5 h-5 inline mr-2" />
-            How to Upload Audio Files
+            Audio Upload Instructions
           </h3>
           <ol className="space-y-2 text-charcoal/80">
-            <li>1. Upload your MP3 file to a cloud storage service (Google Drive, Dropbox, or AWS S3)</li>
-            <li>2. Get the direct/public link to the file</li>
-            <li>3. Paste the link in the "Audio File URL" field above</li>
-            <li>4. Make sure the link is publicly accessible</li>
+            <li>1. Click "Upload MP3" to select an audio file from your computer</li>
+            <li>2. The file will be automatically uploaded to AWS S3</li>
+            <li>3. Maximum file size: 100MB</li>
+            <li>4. Supported formats: MP3, WAV, M4A, and other audio formats</li>
+            <li>5. Upload progress will be displayed during the upload</li>
           </ol>
           <p className="mt-4 text-sm text-charcoal/60">
-            Note: For best results, use MP3 files under 50MB compressed at 128kbps or lower.
+            Note: Large files may take a few minutes to upload depending on your internet connection.
           </p>
         </div>
       </div>
