@@ -1,9 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import { createClient } from '@supabase/supabase-js'
 
-// In production, store these in a database
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!
+const supabase = createClient(supabaseUrl, supabaseKey)
+
+// Get user from database
 const getUserByEmail = async (email: string) => {
+  try {
+    // First try to get from Supabase
+    const { data: user, error } = await supabase
+      .from('admin_users')
+      .select('id, email, password_hash, role, is_active')
+      .eq('email', email)
+      .single()
+
+    if (user && user.is_active) {
+      return {
+        id: user.id,
+        email: user.email,
+        password: user.password_hash,
+        role: user.role
+      }
+    }
+  } catch (error) {
+    console.log('Database not available, falling back to env vars')
+  }
+
+  // Fallback to environment variables for backward compatibility
   const approvedEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || []
   
   if (!approvedEmails.includes(email)) {
@@ -20,7 +46,8 @@ const getUserByEmail = async (email: string) => {
   return {
     id: email,
     email,
-    password: storedPasswords[email] || defaultPasswordHash
+    password: storedPasswords[email] || defaultPasswordHash,
+    role: email === 'russell@tyrcars.co.uk' ? 'super_admin' : 'admin'
   }
 }
 
@@ -59,7 +86,8 @@ export async function POST(request: NextRequest) {
     const token = jwt.sign(
       { 
         id: user.id,
-        email: user.email 
+        email: user.email,
+        role: user.role 
       },
       process.env.JWT_SECRET || 'fallback-secret-key',
       { expiresIn: '24h' }
@@ -69,7 +97,8 @@ export async function POST(request: NextRequest) {
       token,
       user: {
         id: user.id,
-        email: user.email
+        email: user.email,
+        role: user.role
       }
     })
   } catch (error) {

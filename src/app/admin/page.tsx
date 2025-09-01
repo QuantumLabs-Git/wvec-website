@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Calendar, FileText, Edit3, Users, TrendingUp, Clock, Mic } from 'lucide-react'
+import { Calendar, FileText, Edit3, Users, TrendingUp, Clock, Mic, Shield } from 'lucide-react'
 import Link from 'next/link'
 
 interface DashboardStats {
@@ -20,9 +20,11 @@ export default function AdminDashboard() {
     recentArticles: 0,
     lastUpdated: new Date().toISOString()
   })
+  const [userRole, setUserRole] = useState<string>('admin')
 
   useEffect(() => {
     fetchDashboardStats()
+    fetchUserRole()
   }, [])
 
   const fetchDashboardStats = async () => {
@@ -39,6 +41,23 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Failed to fetch dashboard stats:', error)
+    }
+  }
+
+  const fetchUserRole = async () => {
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/admin/users/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setUserRole(data.user?.role || 'admin')
+      }
+    } catch (error) {
+      console.error('Failed to fetch user role:', error)
     }
   }
 
@@ -77,7 +96,14 @@ export default function AdminDashboard() {
       icon: Users,
       href: '/admin/profile',
       color: 'bg-cyber-teal'
-    }
+    },
+    ...(userRole === 'super_admin' ? [{
+      title: 'Manage Users',
+      description: 'Add and manage admin users',
+      icon: Shield,
+      href: '/admin/users',
+      color: 'bg-red-600'
+    }] : [])
   ]
 
   const statCards = [
