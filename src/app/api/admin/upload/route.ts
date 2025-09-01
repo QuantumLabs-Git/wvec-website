@@ -42,9 +42,12 @@ export async function POST(request: Request) {
     }
 
     // Check file type
-    if (!fileType.includes('audio')) {
+    const isAudio = fileType.includes('audio')
+    const isImage = fileType.includes('image')
+    
+    if (!isAudio && !isImage) {
       return NextResponse.json(
-        { error: 'Only audio files are allowed' },
+        { error: 'Only audio and image files are allowed' },
         { status: 400 }
       )
     }
@@ -57,10 +60,11 @@ export async function POST(request: Request) {
       )
     }
 
-    // Generate unique file name
+    // Generate unique file name based on file type
     const timestamp = Date.now()
     const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_')
-    const key = `sermons/${timestamp}-${sanitizedFileName}`
+    const folder = isAudio ? 'sermons' : 'events'
+    const key = `${folder}/${timestamp}-${sanitizedFileName}`
 
     // Create the PutObjectCommand
     const command = new PutObjectCommand({

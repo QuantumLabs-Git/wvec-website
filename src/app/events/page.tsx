@@ -17,6 +17,7 @@ interface Event {
   description?: string
   category?: string
   image?: string
+  image_url?: string
 }
 
 export default function EventsPage() {
@@ -151,9 +152,9 @@ END:VCALENDAR`
                   className="glass-effect rounded-lg sm:rounded-xl overflow-hidden hover:shadow-lg smooth-transition"
                 >
                   <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-sage/20 to-steel-blue/20">
-                    {event.image ? (
+                    {(event.image_url || event.image) ? (
                       <Image
-                        src={event.image}
+                        src={event.image_url || event.image || ''}
                         alt={event.title}
                         fill
                         className="object-cover"

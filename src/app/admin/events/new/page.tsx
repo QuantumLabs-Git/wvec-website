@@ -1,13 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, Calendar, Clock, MapPin, Tag, FileText, Save, Repeat } from 'lucide-react'
+import { ChevronLeft, Calendar, Clock, MapPin, Tag, FileText, Save, Repeat, Upload, Image, Loader2 } from 'lucide-react'
 
 export default function NewEventPage() {
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -15,6 +19,7 @@ export default function NewEventPage() {
     time: '',
     location: 'Whiddon Valley Evangelical Church',
     category: 'service',
+    image_url: '',
     isPublished: false,
     isRecurring: false,
     recurrencePattern: 'weekly',
@@ -22,6 +27,88 @@ export default function NewEventPage() {
     recurrenceInterval: 1,
     recurrenceDaysOfWeek: [] as string[]
   })
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file')
+      return
+    }
+
+    // Validate file size (5MB limit for images)
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    if (file.size > maxSize) {
+      setError('Image size must be less than 5MB')
+      return
+    }
+
+    setUploadingImage(true)
+    setUploadProgress(0)
+    setError('')
+
+    try {
+      // Get pre-signed URL from our API
+      const response = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fileName: `event-${Date.now()}-${file.name}`,
+          fileType: file.type,
+          fileSize: file.size
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to get upload URL')
+      }
+
+      const { uploadUrl, publicUrl } = await response.json()
+
+      // Upload file directly to S3
+      const xhr = new XMLHttpRequest()
+
+      // Track upload progress
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100)
+          setUploadProgress(percentComplete)
+        }
+      })
+
+      // Handle upload completion
+      await new Promise((resolve, reject) => {
+        xhr.onload = () => {
+          if (xhr.status === 200 || xhr.status === 204) {
+            resolve(xhr.response)
+          } else {
+            reject(new Error(`Upload failed with status: ${xhr.status}`))
+          }
+        }
+        xhr.onerror = () => reject(new Error('Upload failed'))
+
+        xhr.open('PUT', uploadUrl)
+        xhr.setRequestHeader('Content-Type', file.type)
+        xhr.send(file)
+      })
+
+      // Update form with the public URL
+      setFormData(prev => ({ ...prev, image_url: publicUrl }))
+
+    } catch (err) {
+      console.error('Upload error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to upload image')
+    } finally {
+      setUploadingImage(false)
+      setUploadProgress(0)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -83,6 +170,13 @@ export default function NewEventPage() {
         <p className="text-charcoal/60">Add a new event to the church calendar</p>
       </div>
 
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3">
+          <span className="text-red-600">⚠️</span>
+          <p className="text-red-800">{error}</p>
+        </div>
+      )}
+      
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="glass-effect rounded-xl p-6 space-y-6">
           {/* Title */}
@@ -119,6 +213,84 @@ export default function NewEventPage() {
                 className="w-full pl-10 pr-4 py-3 border border-charcoal/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue resize-none"
                 placeholder="Provide details about the event..."
               />
+            </div>
+          </div>
+
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-charcoal mb-2">
+              <Image className="w-4 h-4 inline mr-2" />
+              Event Image
+            </label>
+            
+            <div className="space-y-4">
+              {/* Current Image Preview */}
+              {formData.image_url && (
+                <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
+                  <img 
+                    src={formData.image_url} 
+                    alt="Event thumbnail" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+
+              {/* Upload Button */}
+              <div className="flex items-center gap-4">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  disabled={uploadingImage}
+                />
+                
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage || isLoading}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-steel-blue text-white rounded-lg hover:bg-cyber-teal transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploadingImage ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      {formData.image_url ? 'Change Image' : 'Upload Image'}
+                    </>
+                  )}
+                </button>
+
+                {/* Progress Bar */}
+                {uploadingImage && (
+                  <div className="flex-1 max-w-xs">
+                    <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className="bg-steel-blue h-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-sm text-charcoal/60 mt-1">{uploadProgress}% uploaded</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Image URL Input */}
+              <input
+                type="url"
+                name="image_url"
+                value={formData.image_url}
+                onChange={handleChange}
+                placeholder="Or paste image URL directly"
+                className="w-full px-4 py-2 border border-charcoal/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue"
+              />
+              <p className="text-sm text-charcoal/60">
+                Upload an image to display as the event thumbnail (optional)
+              </p>
             </div>
           </div>
 
