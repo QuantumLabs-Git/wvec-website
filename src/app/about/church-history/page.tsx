@@ -64,7 +64,7 @@ export default function ChurchHistoryPage() {
             <div className="prose prose-lg max-w-none space-y-6">
               <p className="text-charcoal/80 leading-relaxed">
                 WHIDDON VALLEY EVANGELICAL CHURCH was opened on 15th August 1987. The church 
-                was formerly known as Rackfield Evangelical Mission and was situated at Rackfield 
+                was formerly known as Rackfield Mission and was situated at Rackfield 
                 off Boutport Street.
               </p>
               
