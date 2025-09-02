@@ -15,6 +15,7 @@ interface Article {
   tags?: string[]
   slug?: string
   is_published?: boolean
+  featured_image?: string
 }
 
 export default function ArticlesPage() {
@@ -148,10 +149,24 @@ export default function ArticlesPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="glass-effect rounded-2xl p-8 hover:shadow-xl smooth-transition group"
+                  className="glass-effect rounded-2xl overflow-hidden hover:shadow-xl smooth-transition group"
                 >
-                  {article.category && (
-                    <div className="mb-4 flex flex-wrap gap-2">
+                  {/* Featured Image */}
+                  {article.featured_image && (
+                    <Link href={`/articles/${article.slug || article.id}`}>
+                      <div className="relative h-48 overflow-hidden">
+                        <img 
+                          src={article.featured_image} 
+                          alt={article.title}
+                          className="w-full h-full object-cover group-hover:scale-105 smooth-transition"
+                        />
+                      </div>
+                    </Link>
+                  )}
+                  
+                  <div className="p-8">
+                    {article.category && (
+                      <div className="mb-4 flex flex-wrap gap-2">
                       <span className="inline-block px-3 py-1 bg-sage/20 text-charcoal rounded-full text-sm">
                         {article.category}
                       </span>
@@ -195,6 +210,7 @@ export default function ArticlesPage() {
                     >
                       Read more →
                     </Link>
+                  </div>
                   </div>
                 </motion.article>
               ))}

@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, FileText, Tag, User, Image, Save, Bold, Italic, List, Link2, Quote } from 'lucide-react'
+import { ChevronLeft, FileText, Tag, User, Image, Save, Bold, Italic, List, Link2, Quote, Upload } from 'lucide-react'
 
 export default function NewArticlePage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [formData, setFormData] = useState({
     title: '',
     excerpt: '',
@@ -64,6 +66,88 @@ export default function NewArticlePage() {
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     }))
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
+    }
+
+    // Validate file size (5MB max for images)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be less than 5MB')
+      return
+    }
+
+    setUploadingImage(true)
+    setUploadProgress(0)
+
+    try {
+      const token = localStorage.getItem('admin_token')
+      
+      // Get pre-signed URL
+      const urlResponse = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          uploadType: 'image',
+          folder: 'articles'
+        })
+      })
+
+      if (!urlResponse.ok) {
+        throw new Error('Failed to get upload URL')
+      }
+
+      const { uploadUrl, fileUrl } = await urlResponse.json()
+
+      // Upload file to S3 using XMLHttpRequest for progress tracking
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const progress = Math.round((e.loaded / e.total) * 100)
+            setUploadProgress(progress)
+          }
+        })
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 200) {
+            resolve(xhr.response)
+          } else {
+            reject(new Error('Upload failed'))
+          }
+        })
+
+        xhr.addEventListener('error', () => reject(new Error('Upload failed')))
+
+        xhr.open('PUT', uploadUrl)
+        xhr.setRequestHeader('Content-Type', file.type)
+        xhr.send(file)
+      })
+
+      // Update form with S3 URL
+      setFormData(prev => ({ ...prev, featuredImage: fileUrl }))
+      alert('Image uploaded successfully!')
+    } catch (error) {
+      console.error('Upload failed:', error)
+      alert('Failed to upload image')
+    } finally {
+      setUploadingImage(false)
+      setUploadProgress(0)
+    }
   }
 
   const insertFormatting = (format: string) => {
@@ -308,8 +392,68 @@ export default function NewArticlePage() {
 
               <div>
                 <label className="block text-sm font-medium text-charcoal mb-2">
-                  Featured Image URL
+                  Featured Image
                 </label>
+                
+                {/* Upload Button */}
+                <div className="mb-3">
+                  <input
+                    type="file"
+                    id="imageUpload"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="imageUpload"
+                    className="flex items-center justify-center space-x-2 w-full px-4 py-3 border-2 border-dashed border-charcoal/20 rounded-lg hover:border-steel-blue cursor-pointer smooth-transition"
+                  >
+                    {uploadingImage ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-steel-blue border-t-transparent rounded-full animate-spin" />
+                        <span className="text-sm text-charcoal">Uploading... {uploadProgress}%</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-5 h-5 text-charcoal/40" />
+                        <span className="text-sm text-charcoal">Upload Image</span>
+                      </>
+                    )}
+                  </label>
+                  <p className="text-xs text-charcoal/40 mt-1">Max 5MB, JPG/PNG</p>
+                </div>
+
+                {/* Progress Bar */}
+                {uploadingImage && (
+                  <div className="mb-3">
+                    <div className="w-full bg-charcoal/10 rounded-full h-2">
+                      <div 
+                        className="bg-steel-blue h-2 rounded-full smooth-transition"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Image Preview */}
+                {formData.featuredImage && (
+                  <div className="mb-3">
+                    <img 
+                      src={formData.featuredImage} 
+                      alt="Featured" 
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, featuredImage: '' }))}
+                      className="text-xs text-red-600 hover:text-red-700 mt-1"
+                    >
+                      Remove image
+                    </button>
+                  </div>
+                )}
+
+                {/* Manual URL Input */}
                 <div className="relative">
                   <Image className="absolute left-3 top-1/2 transform -translate-y-1/2 text-charcoal/40 w-5 h-5" />
                   <input
@@ -317,8 +461,8 @@ export default function NewArticlePage() {
                     name="featuredImage"
                     value={formData.featuredImage}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 border border-charcoal/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue"
-                    placeholder="https://example.com/image.jpg"
+                    className="w-full pl-10 pr-4 py-3 border border-charcoal/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-steel-blue text-sm"
+                    placeholder="Or enter image URL"
                   />
                 </div>
               </div>

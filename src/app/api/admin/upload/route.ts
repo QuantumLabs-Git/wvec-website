@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { fileName, fileType, fileSize } = await request.json()
+    const { fileName, fileType, fileSize, uploadType, folder } = await request.json()
 
     // Validate file
     if (!fileName || !fileType || !fileSize) {
@@ -63,8 +63,18 @@ export async function POST(request: Request) {
     // Generate unique file name based on file type
     const timestamp = Date.now()
     const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_')
-    const folder = isAudio ? 'sermons' : 'events'
-    const key = `${folder}/${timestamp}-${sanitizedFileName}`
+    
+    // Determine folder based on upload type or explicit folder parameter
+    let uploadFolder = 'uploads' // default folder
+    if (folder) {
+      uploadFolder = folder // Use explicit folder if provided
+    } else if (uploadType === 'audio' || isAudio) {
+      uploadFolder = 'sermons'
+    } else if (uploadType === 'image' || isImage) {
+      uploadFolder = 'events'
+    }
+    
+    const key = `${uploadFolder}/${timestamp}-${sanitizedFileName}`
 
     // Create the PutObjectCommand
     const command = new PutObjectCommand({
@@ -83,6 +93,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       uploadUrl,
       publicUrl,
+      fileUrl: publicUrl, // Include fileUrl for backward compatibility
       key,
     })
   } catch (error) {
