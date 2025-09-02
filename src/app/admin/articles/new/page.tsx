@@ -107,7 +107,9 @@ export default function NewArticlePage() {
       })
 
       if (!urlResponse.ok) {
-        throw new Error('Failed to get upload URL')
+        const errorData = await urlResponse.json()
+        console.error('Upload URL error:', errorData)
+        throw new Error(errorData.error || 'Failed to get upload URL')
       }
 
       const { uploadUrl, fileUrl } = await urlResponse.json()
@@ -124,10 +126,11 @@ export default function NewArticlePage() {
         })
 
         xhr.addEventListener('load', () => {
-          if (xhr.status === 200) {
+          if (xhr.status === 200 || xhr.status === 204) {
             resolve(xhr.response)
           } else {
-            reject(new Error('Upload failed'))
+            console.error('S3 upload failed with status:', xhr.status)
+            reject(new Error(`Upload failed with status ${xhr.status}`))
           }
         })
 

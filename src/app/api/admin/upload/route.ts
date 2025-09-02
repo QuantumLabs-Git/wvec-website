@@ -76,13 +76,15 @@ export async function POST(request: Request) {
     
     const key = `${uploadFolder}/${timestamp}-${sanitizedFileName}`
 
-    // Create the PutObjectCommand
+    // Create the PutObjectCommand (without ACL - will be handled by bucket policy)
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: key,
       ContentType: fileType,
-      ACL: 'public-read', // Make file publicly readable
+      // ACL removed - public access will be handled by bucket policy
     })
+
+    console.log('Generating pre-signed URL for:', { bucket: BUCKET_NAME, key, fileType })
 
     // Generate pre-signed URL (valid for 5 minutes)
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 })
