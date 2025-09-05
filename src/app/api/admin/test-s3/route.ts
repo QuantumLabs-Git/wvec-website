@@ -38,7 +38,7 @@ export async function GET(request: Request) {
 
     // Try to initialize S3 client if we have credentials
     let s3Status = 'Not configured'
-    let bucketList = []
+    let bucketList: string[] = []
     
     if (accessKeyId && secretAccessKey) {
       try {
