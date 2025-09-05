@@ -69,7 +69,7 @@ export default function EditEventPage({
         isPublished: event.is_published || false,
         isRecurring: event.is_recurring || false,
         recurrencePattern: event.recurrence_pattern || 'weekly',
-        recurrenceEnd: event.recurrence_end ? new Date(event.recurrence_end).toISOString().split('T')[0] : ''
+        recurrenceEnd: event.recurrence_end_date ? new Date(event.recurrence_end_date).toISOString().split('T')[0] : ''
       })
     } catch (err) {
       console.error('Error fetching event:', err)
@@ -185,12 +185,14 @@ export default function EditEventPage({
           is_published: formData.isPublished,
           is_recurring: formData.isRecurring,
           recurrence_pattern: formData.isRecurring ? formData.recurrencePattern : null,
-          recurrence_end: formData.isRecurring ? formData.recurrenceEnd : null
+          recurrence_end_date: formData.isRecurring && formData.recurrenceEnd ? formData.recurrenceEnd : null
         })
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update event')
+        const errorData = await response.json()
+        console.error('Event update error:', errorData)
+        throw new Error(errorData.error || 'Failed to update event')
       }
 
       router.push('/admin/events')
