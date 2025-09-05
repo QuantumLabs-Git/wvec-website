@@ -21,6 +21,8 @@ export default function AdminDashboard() {
     lastUpdated: new Date().toISOString()
   })
   const [userRole, setUserRole] = useState<string>('admin')
+  const [s3TestResult, setS3TestResult] = useState<any>(null)
+  const [testingS3, setTestingS3] = useState(false)
 
   useEffect(() => {
     fetchDashboardStats()
@@ -58,6 +60,24 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Failed to fetch user role:', error)
+    }
+  }
+
+  const testS3Connection = async () => {
+    setTestingS3(true)
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/admin/test-s3', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      const data = await response.json()
+      setS3TestResult(data)
+    } catch (error) {
+      setS3TestResult({ error: 'Failed to test S3 connection' })
+    } finally {
+      setTestingS3(false)
     }
   }
 
@@ -215,6 +235,7 @@ export default function AdminDashboard() {
           </Link>
         </div>
       </div>
+
 
       {/* Recent Activity */}
       <div className="glass-effect rounded-xl p-6">
