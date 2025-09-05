@@ -3,7 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, FileText, Tag, User, Image, Save, Bold, Italic, List, Link2, Quote, Upload } from 'lucide-react'
+import { ChevronLeft, FileText, Tag, User, Image, Save, Upload } from 'lucide-react'
+import dynamic from 'next/dynamic'
+
+// Load RichTextEditor dynamically to avoid SSR issues
+const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), { 
+  ssr: false,
+  loading: () => <div className="h-96 bg-charcoal/5 rounded-lg animate-pulse" />
+})
 
 export default function EditArticlePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
@@ -191,42 +198,8 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
     }
   }
 
-  const insertFormatting = (format: string) => {
-    const textarea = document.getElementById('content') as HTMLTextAreaElement
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const selectedText = formData.content.substring(start, end)
-    let newText = ''
-
-    switch (format) {
-      case 'bold':
-        newText = `**${selectedText}**`
-        break
-      case 'italic':
-        newText = `*${selectedText}*`
-        break
-      case 'list':
-        newText = `\n- ${selectedText}`
-        break
-      case 'link':
-        newText = `[${selectedText}](url)`
-        break
-      case 'quote':
-        newText = `\n> ${selectedText}`
-        break
-      case 'heading':
-        newText = `\n## ${selectedText}`
-        break
-    }
-
-    const newContent = formData.content.substring(0, start) + newText + formData.content.substring(end)
+  const handleContentChange = (newContent: string) => {
     setFormData(prev => ({ ...prev, content: newContent }))
-    
-    setTimeout(() => {
-      textarea.selectionStart = start + newText.length
-      textarea.selectionEnd = start + newText.length
-      textarea.focus()
-    }, 0)
   }
 
   if (isFetching) {
@@ -291,74 +264,16 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
                 />
               </div>
 
-              {/* Content with Formatting Toolbar */}
+              {/* Rich Text Content Editor */}
               <div>
                 <label className="block text-sm font-medium text-charcoal mb-2">
                   Content *
                 </label>
-                <div className="border border-charcoal/20 rounded-lg overflow-hidden">
-                  <div className="bg-charcoal/5 px-4 py-2 flex items-center space-x-2 border-b border-charcoal/10">
-                    <button
-                      type="button"
-                      onClick={() => insertFormatting('bold')}
-                      className="p-2 hover:bg-charcoal/10 rounded smooth-transition"
-                      title="Bold"
-                    >
-                      <Bold className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertFormatting('italic')}
-                      className="p-2 hover:bg-charcoal/10 rounded smooth-transition"
-                      title="Italic"
-                    >
-                      <Italic className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertFormatting('heading')}
-                      className="p-2 hover:bg-charcoal/10 rounded smooth-transition"
-                      title="Heading"
-                    >
-                      <span className="font-bold text-sm">H2</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertFormatting('list')}
-                      className="p-2 hover:bg-charcoal/10 rounded smooth-transition"
-                      title="List"
-                    >
-                      <List className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertFormatting('link')}
-                      className="p-2 hover:bg-charcoal/10 rounded smooth-transition"
-                      title="Link"
-                    >
-                      <Link2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertFormatting('quote')}
-                      className="p-2 hover:bg-charcoal/10 rounded smooth-transition"
-                      title="Quote"
-                    >
-                      <Quote className="w-4 h-4" />
-                    </button>
-                    <span className="text-xs text-charcoal/40 ml-4">Markdown supported</span>
-                  </div>
-                  <textarea
-                    id="content"
-                    name="content"
-                    value={formData.content}
-                    onChange={handleChange}
-                    required
-                    rows={20}
-                    className="w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-steel-blue resize-none font-mono text-sm"
-                    placeholder="Write your article content here..."
-                  />
-                </div>
+                <RichTextEditor
+                  content={formData.content}
+                  onChange={handleContentChange}
+                  placeholder="Write your article content here..."
+                />
               </div>
             </div>
           </div>

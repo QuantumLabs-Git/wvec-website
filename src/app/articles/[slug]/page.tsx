@@ -132,39 +132,11 @@ export default async function ArticlePage({ params }: PageProps) {
                 </div>
               )}
               
-              {/* Article content */}
-              <div className="article-content text-charcoal/80 leading-relaxed">
-                {article.content.split('\n\n').map((paragraph: string, index: number) => {
-                  // Check for headers
-                  if (paragraph.startsWith('## ')) {
-                    return <h2 key={index} className="text-2xl font-semibold text-charcoal mb-4 mt-6">{paragraph.slice(3)}</h2>
-                  }
-                  if (paragraph.startsWith('### ')) {
-                    return <h3 key={index} className="text-xl font-semibold text-charcoal mb-3 mt-4">{paragraph.slice(4)}</h3>
-                  }
-                  // Check for lists
-                  if (paragraph.startsWith('- ') || paragraph.startsWith('* ')) {
-                    const items = paragraph.split('\n')
-                    return (
-                      <ul key={index} className="list-disc list-inside mb-4 space-y-2">
-                        {items.map((item, i) => (
-                          <li key={i} className="ml-4">{item.slice(2)}</li>
-                        ))}
-                      </ul>
-                    )
-                  }
-                  // Check for quotes
-                  if (paragraph.startsWith('> ')) {
-                    return (
-                      <blockquote key={index} className="border-l-4 border-steel-blue pl-4 italic text-charcoal/70 mb-4">
-                        {paragraph.slice(2)}
-                      </blockquote>
-                    )
-                  }
-                  // Regular paragraph
-                  return <p key={index} className="mb-4">{paragraph}</p>
-                })}
-              </div>
+              {/* Article content - render HTML content */}
+              <div 
+                className="article-content prose prose-lg prose-charcoal max-w-none"
+                dangerouslySetInnerHTML={{ __html: article.content }}
+              />
             </div>
 
             {/* Share buttons */}

@@ -3,7 +3,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, FileText, Tag, User, Image, Save, Bold, Italic, List, Link2, Quote, Upload } from 'lucide-react'
+import { ChevronLeft, FileText, Tag, User, Image, Save, Upload } from 'lucide-react'
+import dynamic from 'next/dynamic'
+
+// Load RichTextEditor dynamically to avoid SSR issues
+const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), { 
+  ssr: false,
+  loading: () => <div className="h-96 bg-charcoal/5 rounded-lg animate-pulse" />
+})
 
 export default function NewArticlePage() {
   const router = useRouter()
@@ -153,43 +160,8 @@ export default function NewArticlePage() {
     }
   }
 
-  const insertFormatting = (format: string) => {
-    const textarea = document.getElementById('content') as HTMLTextAreaElement
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const selectedText = formData.content.substring(start, end)
-    let newText = ''
-
-    switch (format) {
-      case 'bold':
-        newText = `**${selectedText}**`
-        break
-      case 'italic':
-        newText = `*${selectedText}*`
-        break
-      case 'list':
-        newText = `\n- ${selectedText}`
-        break
-      case 'link':
-        newText = `[${selectedText}](url)`
-        break
-      case 'quote':
-        newText = `\n> ${selectedText}`
-        break
-      case 'heading':
-        newText = `\n## ${selectedText}`
-        break
-    }
-
-    const newContent = formData.content.substring(0, start) + newText + formData.content.substring(end)
+  const handleContentChange = (newContent: string) => {
     setFormData(prev => ({ ...prev, content: newContent }))
-    
-    // Reset cursor position
-    setTimeout(() => {
-      textarea.selectionStart = start + newText.length
-      textarea.selectionEnd = start + newText.length
-      textarea.focus()
-    }, 0)
   }
 
   return (
@@ -243,74 +215,16 @@ export default function NewArticlePage() {
                 />
               </div>
 
-              {/* Content with Formatting Toolbar */}
+              {/* Rich Text Content Editor */}
               <div>
                 <label className="block text-sm font-medium text-charcoal mb-2">
                   Content *
                 </label>
-                <div className="border border-charcoal/20 rounded-lg overflow-hidden">
-                  <div className="bg-charcoal/5 px-4 py-2 flex items-center space-x-2 border-b border-charcoal/10">
-                    <button
-                      type="button"
-                      onClick={() => insertFormatting('bold')}
-                      className="p-2 hover:bg-charcoal/10 rounded smooth-transition"
-                      title="Bold"
-                    >
-                      <Bold className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertFormatting('italic')}
-                      className="p-2 hover:bg-charcoal/10 rounded smooth-transition"
-                      title="Italic"
-                    >
-                      <Italic className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertFormatting('heading')}
-                      className="p-2 hover:bg-charcoal/10 rounded smooth-transition"
-                      title="Heading"
-                    >
-                      <span className="font-bold text-sm">H2</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertFormatting('list')}
-                      className="p-2 hover:bg-charcoal/10 rounded smooth-transition"
-                      title="List"
-                    >
-                      <List className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertFormatting('link')}
-                      className="p-2 hover:bg-charcoal/10 rounded smooth-transition"
-                      title="Link"
-                    >
-                      <Link2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertFormatting('quote')}
-                      className="p-2 hover:bg-charcoal/10 rounded smooth-transition"
-                      title="Quote"
-                    >
-                      <Quote className="w-4 h-4" />
-                    </button>
-                    <span className="text-xs text-charcoal/40 ml-4">Markdown supported</span>
-                  </div>
-                  <textarea
-                    id="content"
-                    name="content"
-                    value={formData.content}
-                    onChange={handleChange}
-                    required
-                    rows={20}
-                    className="w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-steel-blue resize-none font-mono text-sm"
-                    placeholder="Write your article content here... (Markdown formatting supported)"
-                  />
-                </div>
+                <RichTextEditor
+                  content={formData.content}
+                  onChange={handleContentChange}
+                  placeholder="Write your article content here..."
+                />
               </div>
             </div>
           </div>
@@ -489,18 +403,6 @@ export default function NewArticlePage() {
               </Link>
             </div>
 
-            {/* Help Text */}
-            <div className="glass-effect rounded-xl p-6">
-              <h4 className="text-sm font-semibold text-charcoal mb-3">Formatting Help</h4>
-              <div className="space-y-2 text-xs text-charcoal/60">
-                <p><code className="bg-charcoal/5 px-1">**bold**</code> → <strong>bold</strong></p>
-                <p><code className="bg-charcoal/5 px-1">*italic*</code> → <em>italic</em></p>
-                <p><code className="bg-charcoal/5 px-1">## Heading</code> → Heading 2</p>
-                <p><code className="bg-charcoal/5 px-1">[text](url)</code> → Link</p>
-                <p><code className="bg-charcoal/5 px-1">&gt; quote</code> → Blockquote</p>
-                <p><code className="bg-charcoal/5 px-1">- item</code> → List item</p>
-              </div>
-            </div>
           </div>
         </div>
       </form>
