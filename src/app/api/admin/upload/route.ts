@@ -77,8 +77,17 @@ export async function POST(request: Request) {
       console.error('S3 credentials not configured - AWS credentials missing')
       console.error('S3_ACCESS_KEY_ID:', accessKeyId ? 'SET' : 'NOT SET')
       console.error('S3_SECRET_ACCESS_KEY:', secretAccessKey ? 'SET' : 'NOT SET')
+      console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('S3') || k.includes('AWS')).join(', '))
       return NextResponse.json(
-        { error: 'Upload service not configured. Please contact administrator.' },
+        { 
+          error: 'Upload service not configured. Please contact administrator.',
+          debug: {
+            hasAccessKey: !!accessKeyId,
+            hasSecretKey: !!secretAccessKey,
+            region: region,
+            bucket: BUCKET_NAME
+          }
+        },
         { status: 503 }
       )
     }
@@ -116,6 +125,11 @@ export async function POST(request: Request) {
     })
   } catch (error: any) {
     console.error('Failed to generate upload URL:', error)
+    
+    // Get credentials for error reporting
+    const accessKeyId = process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID
+    const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY
+    
     return NextResponse.json(
       { 
         error: 'Failed to generate upload URL',
