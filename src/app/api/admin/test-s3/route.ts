@@ -55,7 +55,7 @@ export async function GET(request: Request) {
         const response = await s3Client.send(listCommand)
         
         s3Status = 'Connected successfully'
-        bucketList = response.Buckets?.map(b => b.Name) || []
+        bucketList = response.Buckets?.map(b => b.Name).filter((name): name is string => name !== undefined) || []
       } catch (error: any) {
         s3Status = `Connection failed: ${error.message}`
       }
