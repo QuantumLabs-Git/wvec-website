@@ -3,29 +3,16 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import jwt from 'jsonwebtoken'
 
-// Get AWS credentials
-const accessKeyId = process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID
-const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY
-const region = process.env.S3_REGION || process.env.AWS_REGION || 'us-east-2'
-
-if (!accessKeyId || !secretAccessKey) {
-  console.error('AWS credentials not configured. Please set S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY environment variables.')
-}
-
-// Initialize S3 client
-const s3Client = accessKeyId && secretAccessKey ? new S3Client({
-  region,
-  credentials: {
-    accessKeyId,
-    secretAccessKey,
-  },
-}) : null
-
-const BUCKET_NAME = process.env.S3_BUCKET_NAME || process.env.AWS_S3_BUCKET_NAME || 'wvec-sermons'
 const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
 
 export async function POST(request: Request) {
   try {
+    // Get AWS credentials at request time
+    const accessKeyId = process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID
+    const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY
+    const region = process.env.S3_REGION || process.env.AWS_REGION || 'us-east-2'
+    const BUCKET_NAME = process.env.S3_BUCKET_NAME || process.env.AWS_S3_BUCKET_NAME || 'wvec-sermons'
+
     // Verify admin token
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.replace('Bearer ', '')
@@ -85,14 +72,25 @@ export async function POST(request: Request) {
     
     const key = `${uploadFolder}/${timestamp}-${sanitizedFileName}`
 
-    // Check if S3 client is initialized
-    if (!s3Client) {
-      console.error('S3 client not initialized - AWS credentials missing')
+    // Check if AWS credentials are available
+    if (!accessKeyId || !secretAccessKey) {
+      console.error('S3 credentials not configured - AWS credentials missing')
+      console.error('S3_ACCESS_KEY_ID:', accessKeyId ? 'SET' : 'NOT SET')
+      console.error('S3_SECRET_ACCESS_KEY:', secretAccessKey ? 'SET' : 'NOT SET')
       return NextResponse.json(
         { error: 'Upload service not configured. Please contact administrator.' },
         { status: 503 }
       )
     }
+
+    // Initialize S3 client with credentials
+    const s3Client = new S3Client({
+      region,
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
+      },
+    })
 
     // Create the PutObjectCommand (without ACL - will be handled by bucket policy)
     const command = new PutObjectCommand({
@@ -108,7 +106,7 @@ export async function POST(request: Request) {
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 })
 
     // The public URL where the file will be accessible
-    const publicUrl = `https://${BUCKET_NAME}.s3.${process.env.S3_REGION || process.env.AWS_REGION || 'us-east-2'}.amazonaws.com/${key}`
+    const publicUrl = `https://${BUCKET_NAME}.s3.${region}.amazonaws.com/${key}`
 
     return NextResponse.json({
       uploadUrl,
