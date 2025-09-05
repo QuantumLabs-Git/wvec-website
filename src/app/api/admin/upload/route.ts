@@ -3,14 +3,23 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import jwt from 'jsonwebtoken'
 
+// Get AWS credentials
+const accessKeyId = process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID
+const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY
+const region = process.env.S3_REGION || process.env.AWS_REGION || 'us-east-2'
+
+if (!accessKeyId || !secretAccessKey) {
+  console.error('AWS credentials not configured. Please set S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY environment variables.')
+}
+
 // Initialize S3 client
-const s3Client = new S3Client({
-  region: process.env.S3_REGION || process.env.AWS_REGION || 'us-east-2',
+const s3Client = accessKeyId && secretAccessKey ? new S3Client({
+  region,
   credentials: {
-    accessKeyId: process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY!,
+    accessKeyId,
+    secretAccessKey,
   },
-})
+}) : null
 
 const BUCKET_NAME = process.env.S3_BUCKET_NAME || process.env.AWS_S3_BUCKET_NAME || 'wvec-sermons'
 const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
@@ -76,6 +85,15 @@ export async function POST(request: Request) {
     
     const key = `${uploadFolder}/${timestamp}-${sanitizedFileName}`
 
+    // Check if S3 client is initialized
+    if (!s3Client) {
+      console.error('S3 client not initialized - AWS credentials missing')
+      return NextResponse.json(
+        { error: 'Upload service not configured. Please contact administrator.' },
+        { status: 503 }
+      )
+    }
+
     // Create the PutObjectCommand (without ACL - will be handled by bucket policy)
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
@@ -98,10 +116,14 @@ export async function POST(request: Request) {
       fileUrl: publicUrl, // Include fileUrl for backward compatibility
       key,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to generate upload URL:', error)
     return NextResponse.json(
-      { error: 'Failed to generate upload URL' },
+      { 
+        error: 'Failed to generate upload URL',
+        details: error?.message || 'Unknown error',
+        hint: !accessKeyId || !secretAccessKey ? 'AWS credentials may not be configured' : undefined
+      },
       { status: 500 }
     )
   }

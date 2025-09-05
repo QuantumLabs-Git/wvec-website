@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, Edit2, Trash2, Calendar, Clock, MapPin, Search } from 'lucide-react'
+import { Plus, Edit2, Trash2, Calendar, Clock, MapPin, Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 
 interface Event {
   id: string
@@ -17,10 +17,17 @@ interface Event {
   updatedAt: string
 }
 
+type SortField = 'title' | 'date' | 'location' | 'status'
+type SortOrder = 'asc' | 'desc'
+
 export default function EventsManagementPage() {
   const [events, setEvents] = useState<Event[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [sortField, setSortField] = useState<SortField>('date')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 20
 
   useEffect(() => {
     fetchEvents()
@@ -92,10 +99,46 @@ export default function EventsManagementPage() {
     }
   }
 
+  const handleSort = (field: SortField) => {
+    if (field === sortField) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortOrder('asc')
+    }
+  }
+
   const filteredEvents = events.filter(event =>
     event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     event.description.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  // Sort events
+  const sortedEvents = [...filteredEvents].sort((a, b) => {
+    let compareValue = 0
+    
+    switch (sortField) {
+      case 'title':
+        compareValue = a.title.localeCompare(b.title)
+        break
+      case 'date':
+        compareValue = new Date(a.date).getTime() - new Date(b.date).getTime()
+        break
+      case 'location':
+        compareValue = a.location.localeCompare(b.location)
+        break
+      case 'status':
+        compareValue = (a.isPublished ? 1 : 0) - (b.isPublished ? 1 : 0)
+        break
+    }
+    
+    return sortOrder === 'asc' ? compareValue : -compareValue
+  })
+
+  // Paginate events
+  const totalPages = Math.ceil(sortedEvents.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedEvents = sortedEvents.slice(startIndex, startIndex + itemsPerPage)
 
   if (isLoading) {
     return (
@@ -144,22 +187,70 @@ export default function EventsManagementPage() {
           <table className="w-full">
             <thead className="bg-charcoal/5 border-b border-charcoal/10">
               <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-charcoal">Event</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-charcoal">Date & Time</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-charcoal">Location</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-charcoal">Status</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-charcoal">
+                  <button
+                    onClick={() => handleSort('title')}
+                    className="flex items-center space-x-1 hover:text-steel-blue smooth-transition"
+                  >
+                    <span>Event</span>
+                    {sortField === 'title' ? (
+                      sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+                    ) : (
+                      <ArrowUpDown className="w-4 h-4 opacity-40" />
+                    )}
+                  </button>
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-charcoal">
+                  <button
+                    onClick={() => handleSort('date')}
+                    className="flex items-center space-x-1 hover:text-steel-blue smooth-transition"
+                  >
+                    <span>Date & Time</span>
+                    {sortField === 'date' ? (
+                      sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+                    ) : (
+                      <ArrowUpDown className="w-4 h-4 opacity-40" />
+                    )}
+                  </button>
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-charcoal">
+                  <button
+                    onClick={() => handleSort('location')}
+                    className="flex items-center space-x-1 hover:text-steel-blue smooth-transition"
+                  >
+                    <span>Location</span>
+                    {sortField === 'location' ? (
+                      sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+                    ) : (
+                      <ArrowUpDown className="w-4 h-4 opacity-40" />
+                    )}
+                  </button>
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-charcoal">
+                  <button
+                    onClick={() => handleSort('status')}
+                    className="flex items-center space-x-1 hover:text-steel-blue smooth-transition"
+                  >
+                    <span>Status</span>
+                    {sortField === 'status' ? (
+                      sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />
+                    ) : (
+                      <ArrowUpDown className="w-4 h-4 opacity-40" />
+                    )}
+                  </button>
+                </th>
                 <th className="text-right px-6 py-4 text-sm font-medium text-charcoal">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredEvents.length === 0 ? (
+              {paginatedEvents.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-charcoal/40">
                     No events found. Create your first event to get started.
                   </td>
                 </tr>
               ) : (
-                filteredEvents.map((event) => (
+                paginatedEvents.map((event) => (
                   <tr key={event.id} className="border-b border-charcoal/5 hover:bg-charcoal/2">
                     <td className="px-6 py-4">
                       <div>
@@ -218,6 +309,58 @@ export default function EventsManagementPage() {
           </table>
         </div>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="text-sm text-charcoal/60">
+            Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, sortedEvents.length)} of {sortedEvents.length} events
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border border-charcoal/20 rounded-lg hover:bg-charcoal/5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum
+                if (totalPages <= 5) {
+                  pageNum = i + 1
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i
+                } else {
+                  pageNum = currentPage - 2 + i
+                }
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-8 h-8 rounded-lg ${
+                      currentPage === pageNum
+                        ? 'bg-steel-blue text-white'
+                        : 'hover:bg-charcoal/5 text-charcoal'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                )
+              })}
+            </div>
+            <button
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border border-charcoal/20 rounded-lg hover:bg-charcoal/5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
