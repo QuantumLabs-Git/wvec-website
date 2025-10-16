@@ -12,6 +12,7 @@ export default function NewEventPage() {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState('')
+  const [featuredWarning, setFeaturedWarning] = useState('')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -21,6 +22,7 @@ export default function NewEventPage() {
     category: 'service',
     image_url: '',
     isPublished: false,
+    isFeatured: false,
     isRecurring: false,
     recurrencePattern: 'weekly',
     recurrenceEndDate: '',
@@ -122,7 +124,12 @@ export default function NewEventPage() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          is_published: formData.isPublished,
+          is_featured: formData.isFeatured,
+          is_recurring: formData.isRecurring
+        })
       })
 
       if (response.ok) {
@@ -139,12 +146,49 @@ export default function NewEventPage() {
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const checkFeaturedEvents = async () => {
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/admin/events?featured=true', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const featuredEvents = data.events?.filter((e: any) =>
+          e.is_featured &&
+          new Date(e.date) >= new Date()
+        ) || []
+
+        if (featuredEvents.length > 0) {
+          const nextEvent = featuredEvents[0]
+          setFeaturedWarning(`Event "${nextEvent.title}" is currently featured. This event will feature after "${nextEvent.title}" has commenced.`)
+        } else {
+          setFeaturedWarning('This will now be featured on the website under the hero section.')
+        }
+      }
+    } catch (err) {
+      console.error('Error checking featured events:', err)
+    }
+  }
+
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
+    const newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]: newValue
     }))
+
+    // Check for other featured events when toggling featured status
+    if (name === 'isFeatured' && newValue) {
+      await checkFeaturedEvents()
+    } else if (name === 'isFeatured' && !newValue) {
+      setFeaturedWarning('')
+    }
   }
 
   const handleDayOfWeekToggle = (day: string) => {
@@ -386,6 +430,28 @@ export default function NewEventPage() {
             <label htmlFor="isPublished" className="text-sm text-charcoal">
               Publish immediately (make visible on website)
             </label>
+          </div>
+
+          {/* Featured Event Checkbox */}
+          <div className="space-y-2">
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="isFeatured"
+                name="isFeatured"
+                checked={formData.isFeatured}
+                onChange={handleChange}
+                className="w-4 h-4 text-steel-blue border-charcoal/20 rounded focus:ring-steel-blue"
+              />
+              <label htmlFor="isFeatured" className="text-sm text-charcoal">
+                Feature this event (display prominently on homepage)
+              </label>
+            </div>
+            {featuredWarning && formData.isFeatured && (
+              <div className="ml-6 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                {featuredWarning}
+              </div>
+            )}
           </div>
         </div>
 

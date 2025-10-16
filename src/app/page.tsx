@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import Hero from '@/components/Hero'
-import ServiceTimes from '@/components/ServiceTimes'
+import AlternatingHero from '@/components/AlternatingHero'
 import YouTubeSection from '@/components/YouTubeSection'
 import UpcomingEvents from '@/components/UpcomingEvents'
 import SEOContent from '@/components/SEOContent'
@@ -109,7 +109,7 @@ export default function Home() {
       />
       <div className="overflow-hidden">
         <Hero />
-        <ServiceTimes />
+        <AlternatingHero />
         <SEOContent />
         <YouTubeSection />
         <UpcomingEvents />

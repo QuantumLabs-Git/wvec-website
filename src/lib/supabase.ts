@@ -10,6 +10,7 @@ export interface Event {
   location: string
   category?: string
   is_published: boolean
+  is_featured?: boolean
   created_at: string
   updated_at: string
 }

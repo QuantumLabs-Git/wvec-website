@@ -23,6 +23,7 @@ export default function EditEventPage({
     category: 'general',
     image_url: '',
     isPublished: false,
+    isFeatured: false,
     isRecurring: false,
     recurrencePattern: 'weekly',
     recurrenceEnd: ''
@@ -33,6 +34,7 @@ export default function EditEventPage({
   const [uploadingImage, setUploadingImage] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState('')
+  const [featuredWarning, setFeaturedWarning] = useState('')
 
   useEffect(() => {
     fetchEvent()
@@ -67,6 +69,7 @@ export default function EditEventPage({
         category: event.category || 'general',
         image_url: event.image_url || '',
         isPublished: event.is_published || false,
+        isFeatured: event.is_featured || false,
         isRecurring: event.is_recurring || false,
         recurrencePattern: event.recurrence_pattern || 'weekly',
         recurrenceEnd: event.recurrence_end_date ? new Date(event.recurrence_end_date).toISOString().split('T')[0] : ''
@@ -183,6 +186,7 @@ export default function EditEventPage({
           category: formData.category,
           image_url: formData.image_url,
           is_published: formData.isPublished,
+          is_featured: formData.isFeatured,
           is_recurring: formData.isRecurring,
           recurrence_pattern: formData.isRecurring ? formData.recurrencePattern : null,
           recurrence_end_date: formData.isRecurring && formData.recurrenceEnd ? formData.recurrenceEnd : null
@@ -204,12 +208,50 @@ export default function EditEventPage({
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const checkFeaturedEvents = async () => {
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/admin/events?featured=true', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const featuredEvents = data.events?.filter((e: any) =>
+          e.is_featured &&
+          e.id !== id &&
+          new Date(e.date) >= new Date()
+        ) || []
+
+        if (featuredEvents.length > 0) {
+          const nextEvent = featuredEvents[0]
+          setFeaturedWarning(`Event "${nextEvent.title}" is currently featured. This event will feature after "${nextEvent.title}" has commenced.`)
+        } else {
+          setFeaturedWarning('This will now be featured on the website under the hero section.')
+        }
+      }
+    } catch (err) {
+      console.error('Error checking featured events:', err)
+    }
+  }
+
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
+    const newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]: newValue
     }))
+
+    // Check for other featured events when toggling featured status
+    if (name === 'isFeatured' && newValue) {
+      await checkFeaturedEvents()
+    } else if (name === 'isFeatured' && !newValue) {
+      setFeaturedWarning('')
+    }
   }
 
   if (loading) {
@@ -490,6 +532,28 @@ export default function EditEventPage({
             <label htmlFor="isPublished" className="ml-2 text-sm font-medium text-charcoal">
               Publish this event
             </label>
+          </div>
+
+          {/* Featured Event Status */}
+          <div className="space-y-2">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="isFeatured"
+                name="isFeatured"
+                checked={formData.isFeatured}
+                onChange={handleChange}
+                className="w-4 h-4 text-steel-blue rounded focus:ring-steel-blue"
+              />
+              <label htmlFor="isFeatured" className="ml-2 text-sm font-medium text-charcoal">
+                Feature this event
+              </label>
+            </div>
+            {featuredWarning && formData.isFeatured && (
+              <div className="ml-6 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                {featuredWarning}
+              </div>
+            )}
           </div>
         </div>
 
