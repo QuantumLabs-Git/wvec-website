@@ -17,7 +17,7 @@ interface Event {
   description?: string
   category?: string
   is_published?: boolean
-  image?: string
+  image_url?: string
 }
 
 const UpcomingEvents = () => {
@@ -91,9 +91,9 @@ const UpcomingEvents = () => {
               className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg sm:rounded-xl overflow-hidden hover:shadow-lg smooth-transition group"
             >
               <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-black to-white/10">
-                {event.image ? (
+                {event.image_url ? (
                   <Image
-                    src={event.image}
+                    src={event.image_url}
                     alt={event.title}
                     fill
                     className="object-cover group-hover:scale-110 smooth-transition"

@@ -9,8 +9,12 @@ export interface Event {
   time: string
   location: string
   category?: string
+  image_url?: string
   is_published: boolean
   is_featured?: boolean
+  is_recurring?: boolean
+  recurrence_pattern?: string
+  recurrence_end_date?: string
   created_at: string
   updated_at: string
 }
@@ -215,18 +219,33 @@ export const generateRecurringEvents = async (parentEvent: any) => {
 }
 
 export const updateEvent = async (id: string, updates: Partial<Event>) => {
+  // Add updated_at timestamp
+  const updateData = {
+    ...updates,
+    updated_at: new Date().toISOString()
+  }
+
+  console.log('Updating event with data:', updateData)
+
   const { data, error } = await supabase
     .from('events')
-    .update(updates)
+    .update(updateData)
     .eq('id', id)
     .select()
     .single()
-  
+
   if (error) {
     console.error('Error updating event:', error)
+    console.error('Update data:', updateData)
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      details: error.details
+    })
     throw error
   }
-  
+
+  console.log('Event updated successfully:', data)
   return data
 }
 
