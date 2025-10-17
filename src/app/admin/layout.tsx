@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  FileText, 
-  Edit3, 
-  User, 
+import {
+  LayoutDashboard,
+  Calendar,
+  FileText,
+  Edit3,
+  User,
+  Settings,
   LogOut,
   Menu,
   X,
@@ -111,7 +112,7 @@ export default function AdminLayout({
     { href: '/admin/events', icon: Calendar, label: 'Events' },
     { href: '/admin/articles', icon: FileText, label: 'Articles' },
     { href: '/admin/content', icon: Edit3, label: 'Page Content' },
-    { href: '/admin/profile', icon: User, label: 'Profile' },
+    { href: '/admin/settings', icon: Settings, label: 'Settings' },
   ]
 
   return (
