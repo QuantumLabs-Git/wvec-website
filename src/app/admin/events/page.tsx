@@ -261,7 +261,7 @@ export default function EventsManagementPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2 text-sm text-charcoal/70">
                         <Calendar className="w-4 h-4" />
-                        <span>{new Date(event.date).toLocaleDateString()}</span>
+                        <span>{new Date(event.date + 'T00:00:00').toLocaleDateString()}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-charcoal/70 mt-1">
                         <Clock className="w-4 h-4" />

@@ -6,6 +6,7 @@ import { Calendar, Clock, MapPin } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { format } from 'date-fns'
+import { parseLocalDate } from '@/lib/dateUtils'
 
 interface Event {
   id: string
@@ -33,8 +34,10 @@ const UpcomingEvents = () => {
       if (response.ok) {
         const data = await response.json()
         // Get only the next 3 upcoming events
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
         const upcomingEvents = data.events
-          .filter((event: Event) => new Date(event.date) >= new Date())
+          .filter((event: Event) => parseLocalDate(event.date) >= today)
           .slice(0, 3)
         setEvents(upcomingEvents)
       }
@@ -114,7 +117,7 @@ const UpcomingEvents = () => {
                 <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-white/70 mb-3 sm:mb-4">
                   <div className="flex items-start sm:items-center space-x-2">
                     <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 mt-0.5 sm:mt-0" />
-                    <span className="line-clamp-2">{format(new Date(event.date), 'EEEE, d MMMM yyyy')}</span>
+                    <span className="line-clamp-2">{format(parseLocalDate(event.date), 'EEEE, d MMMM yyyy')}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />

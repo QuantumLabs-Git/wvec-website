@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Calendar from 'react-calendar'
 import { format, addMonths, subMonths } from 'date-fns'
+import { parseLocalDate } from '@/lib/dateUtils'
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, MapPin, Plus } from 'lucide-react'
 import Image from 'next/image'
 import 'react-calendar/dist/Calendar.css'
@@ -53,14 +54,14 @@ export default function EventsPage() {
   }
 
   const monthEvents = events.filter(event => {
-    const eventDate = new Date(event.date)
+    const eventDate = parseLocalDate(event.date)
     return eventDate.getMonth() === currentMonth.getMonth() &&
       eventDate.getFullYear() === currentMonth.getFullYear()
   })
 
   const addToCalendar = (event: Event) => {
-    const startDate = new Date(event.date)
-    const endDate = new Date(event.date)
+    const startDate = parseLocalDate(event.date)
+    const endDate = parseLocalDate(event.date)
     endDate.setHours(endDate.getHours() + 2)
 
     const icsContent = `BEGIN:VCALENDAR
@@ -178,7 +179,7 @@ END:VCALENDAR`
                     <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-charcoal/70 mb-3 sm:mb-4">
                       <div className="flex items-start sm:items-center space-x-2">
                         <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 mt-0.5 sm:mt-0" />
-                        <span className="line-clamp-2">{format(new Date(event.date), 'EEEE, MMMM d, yyyy')}</span>
+                        <span className="line-clamp-2">{format(parseLocalDate(event.date), 'EEEE, MMMM d, yyyy')}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -225,8 +226,8 @@ END:VCALENDAR`
                 value={selectedDate}
                 activeStartDate={currentMonth}
                 tileClassName={({ date }) => {
-                  const hasEvent = events.some(event => 
-                    new Date(event.date).toDateString() === date.toDateString()
+                  const hasEvent = events.some(event =>
+                    parseLocalDate(event.date).toDateString() === date.toDateString()
                   )
                   return hasEvent ? 'has-event' : ''
                 }}
