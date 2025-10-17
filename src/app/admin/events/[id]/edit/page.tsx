@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, Clock, MapPin, FileText, AlertCircle, Upload, Image, Loader2 } from 'lucide-react'
+import { handleImageUpload as uploadImage } from '@/components/ImageUploadHandler'
 
 export default function EditEventPage({ 
   params 
@@ -104,53 +105,17 @@ export default function EditEventPage({
     setError('')
 
     try {
-      // Get pre-signed URL from our API
-      const response = await fetch('/api/admin/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          fileName: `event-${Date.now()}-${file.name}`,
-          fileType: file.type,
-          fileSize: file.size
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to get upload URL')
+      const token = localStorage.getItem('admin_token')
+      if (!token) {
+        throw new Error('No authentication token found')
       }
 
-      const { uploadUrl, publicUrl } = await response.json()
-
-      // Upload file directly to S3
-      const xhr = new XMLHttpRequest()
-
-      // Track upload progress
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable) {
-          const percentComplete = Math.round((event.loaded / event.total) * 100)
-          setUploadProgress(percentComplete)
-        }
-      })
-
-      // Handle upload completion
-      await new Promise((resolve, reject) => {
-        xhr.onload = () => {
-          if (xhr.status === 200 || xhr.status === 204) {
-            resolve(xhr.response)
-          } else {
-            reject(new Error(`Upload failed with status: ${xhr.status}`))
-          }
-        }
-        xhr.onerror = () => reject(new Error('Upload failed'))
-
-        xhr.open('PUT', uploadUrl)
-        xhr.setRequestHeader('Content-Type', file.type)
-        xhr.send(file)
-      })
+      // Use the new upload handler that falls back to Supabase
+      const publicUrl = await uploadImage(
+        file,
+        token,
+        (progress) => setUploadProgress(progress)
+      )
 
       // Update form with the public URL
       setFormData(prev => ({ ...prev, image_url: publicUrl }))
