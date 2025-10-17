@@ -4,9 +4,13 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-const supabase = createClient(supabaseUrl, supabaseKey)
+// Use service key if available, otherwise use anon key
+const supabase = supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : createClient(supabaseUrl, supabaseAnonKey)
 
 // POST - Reset user password (super admin only)
 export async function POST(
@@ -54,18 +58,38 @@ export async function POST(
     // Hash the new password
     const passwordHash = await bcrypt.hash(body.password, 10)
 
-    // Update user password
-    const { error } = await supabase
+    console.log('Updating password for user:', id)
+
+    // Update user password with updated_at timestamp
+    const { data, error } = await supabase
       .from('admin_users')
-      .update({ password_hash: passwordHash })
+      .update({
+        password_hash: passwordHash,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', id)
+      .select()
 
     if (error) {
-      console.error('Supabase error:', error)
+      console.error('Supabase update error:', error)
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details
+      })
       throw error
     }
 
-    return NextResponse.json({ success: true })
+    if (!data || data.length === 0) {
+      console.error('No user updated - user may not exist')
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
+    console.log('Password updated successfully for user:', id)
+    return NextResponse.json({ success: true, message: 'Password reset successfully' })
   } catch (error) {
     console.error('Failed to reset password:', error)
     return NextResponse.json(
