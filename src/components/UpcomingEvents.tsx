@@ -90,13 +90,13 @@ const UpcomingEvents = () => {
               viewport={{ once: true }}
               className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg sm:rounded-xl overflow-hidden hover:shadow-lg smooth-transition group"
             >
-              <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-black to-white/10">
+              <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-black/90 to-white/10">
                 {event.image_url ? (
                   <Image
                     src={event.image_url}
                     alt={event.title}
                     fill
-                    className="object-cover group-hover:scale-110 smooth-transition"
+                    className="object-contain group-hover:scale-105 smooth-transition"
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">

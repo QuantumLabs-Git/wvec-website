@@ -209,11 +209,11 @@ const FeaturedEventSection = ({ event }: { event: Event }) => {
       </div>
 
       {event.image_url && (
-        <div className="mb-6 rounded-lg overflow-hidden">
+        <div className="mb-6 rounded-lg overflow-hidden bg-gradient-to-br from-ivory to-champagne/30">
           <img
             src={event.image_url}
             alt={event.title}
-            className="w-full h-48 sm:h-64 object-cover"
+            className="w-full h-48 sm:h-64 object-contain"
           />
         </div>
       )}

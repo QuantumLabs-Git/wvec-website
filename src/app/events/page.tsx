@@ -158,7 +158,7 @@ END:VCALENDAR`
                         src={event.image_url || event.image || ''}
                         alt={event.title}
                         fill
-                        className="object-cover"
+                        className="object-contain"
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full">
