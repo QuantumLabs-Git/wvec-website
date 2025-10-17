@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, FileText, Tag, User, Image, Save, Upload } from 'lucide-react'
+import { ChevronLeft, FileText, Tag, User, Image, Save, Upload, Loader2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { handleImageUpload as uploadImage } from '@/components/ImageUploadHandler'
 
 // Load RichTextEditor dynamically to avoid SSR issues
 const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), { 
@@ -134,64 +135,23 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
 
     try {
       const token = localStorage.getItem('admin_token')
-      
-      // Get pre-signed URL
-      const urlResponse = await fetch('/api/admin/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          fileName: file.name,
-          fileType: file.type,
-          fileSize: file.size,
-          uploadType: 'image',
-          folder: 'articles'
-        })
-      })
-
-      if (!urlResponse.ok) {
-        const errorData = await urlResponse.json()
-        console.error('Upload URL error:', errorData)
-        throw new Error(errorData.error || 'Failed to get upload URL')
+      if (!token) {
+        throw new Error('No authentication token found')
       }
 
-      const { uploadUrl, fileUrl } = await urlResponse.json()
+      // Use the new upload handler that falls back to Supabase
+      const publicUrl = await uploadImage(
+        file,
+        token,
+        (progress) => setUploadProgress(progress)
+      )
 
-      // Upload file to S3 using XMLHttpRequest for progress tracking
-      await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-        
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            const progress = Math.round((e.loaded / e.total) * 100)
-            setUploadProgress(progress)
-          }
-        })
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status === 200 || xhr.status === 204) {
-            resolve(xhr.response)
-          } else {
-            console.error('S3 upload failed with status:', xhr.status)
-            reject(new Error(`Upload failed with status ${xhr.status}`))
-          }
-        })
-
-        xhr.addEventListener('error', () => reject(new Error('Upload failed')))
-
-        xhr.open('PUT', uploadUrl)
-        xhr.setRequestHeader('Content-Type', file.type)
-        xhr.send(file)
-      })
-
-      // Update form with S3 URL
-      setFormData(prev => ({ ...prev, featuredImage: fileUrl }))
+      // Update form with the public URL
+      setFormData(prev => ({ ...prev, featuredImage: publicUrl }))
       alert('Image uploaded successfully!')
     } catch (error) {
       console.error('Upload failed:', error)
-      alert('Failed to upload image')
+      alert(error instanceof Error ? error.message : 'Failed to upload image')
     } finally {
       setUploadingImage(false)
       setUploadProgress(0)
@@ -376,7 +336,7 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
                   >
                     {uploadingImage ? (
                       <>
-                        <div className="w-5 h-5 border-2 border-steel-blue border-t-transparent rounded-full animate-spin" />
+                        <Loader2 className="w-5 h-5 text-steel-blue animate-spin" />
                         <span className="text-sm text-charcoal">Uploading... {uploadProgress}%</span>
                       </>
                     ) : (
