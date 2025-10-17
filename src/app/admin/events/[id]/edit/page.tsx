@@ -160,8 +160,10 @@ export default function EditEventPage({
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error('Event update error:', errorData)
-        throw new Error(errorData.error || 'Failed to update event')
+        console.error('Event update error response:', errorData)
+        console.error('Update request failed with status:', response.status)
+        console.error('Error details:', errorData.details || 'No additional details')
+        throw new Error(errorData.details || errorData.error || 'Failed to update event')
       }
 
       router.push('/admin/events')

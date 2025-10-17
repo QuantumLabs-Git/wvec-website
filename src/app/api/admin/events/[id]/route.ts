@@ -55,15 +55,29 @@ export async function PATCH(
 
   try {
     const body = await request.json()
+    console.log('Received update request for event:', id)
+    console.log('Update data:', body)
+
     const updatedEvent = await updateEvent(id, body)
     if (!updatedEvent) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 })
     }
+
+    console.log('Event updated successfully:', updatedEvent)
     return NextResponse.json({ event: updatedEvent })
   } catch (error) {
     console.error('Failed to update event:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    })
+
+    // Return more detailed error information
     return NextResponse.json(
-      { error: 'Failed to update event' },
+      {
+        error: 'Failed to update event',
+        details: error instanceof Error ? error.message : 'Unknown error occurred'
+      },
       { status: 500 }
     )
   }

@@ -218,14 +218,53 @@ export const generateRecurringEvents = async (parentEvent: any) => {
   return instances.length
 }
 
-export const updateEvent = async (id: string, updates: Partial<Event>) => {
-  // Add updated_at timestamp
-  const updateData = {
-    ...updates,
-    updated_at: new Date().toISOString()
+export const updateEvent = async (id: string, updates: any) => {
+  // Map field names to match database schema and filter out undefined fields
+  const updateData: any = {}
+
+  // Map fields that exist in the updates
+  if (updates.title !== undefined) updateData.title = updates.title
+  if (updates.description !== undefined) updateData.description = updates.description || null
+  if (updates.date !== undefined) updateData.date = updates.date
+  if (updates.time !== undefined) updateData.time = updates.time
+  if (updates.location !== undefined) updateData.location = updates.location
+  if (updates.category !== undefined) updateData.category = updates.category || 'general'
+  if (updates.image_url !== undefined) updateData.image_url = updates.image_url || null
+  if (updates.is_published !== undefined) updateData.is_published = updates.is_published
+  if (updates.is_featured !== undefined) updateData.is_featured = updates.is_featured
+
+  // Handle recurring event fields
+  if (updates.is_recurring !== undefined) {
+    updateData.is_recurring = updates.is_recurring
+
+    // Only add recurrence fields if it's a recurring event
+    if (updates.is_recurring) {
+      if (updates.recurrence_pattern !== undefined) {
+        updateData.recurrence_pattern = updates.recurrence_pattern
+      }
+      if (updates.recurrence_interval !== undefined) {
+        updateData.recurrence_interval = updates.recurrence_interval
+      }
+      if (updates.recurrence_end_date !== undefined) {
+        updateData.recurrence_end_date = updates.recurrence_end_date || null
+      }
+      if (updates.recurrence_days_of_week !== undefined) {
+        updateData.recurrence_days_of_week = updates.recurrence_days_of_week
+      }
+    } else {
+      // Clear recurrence fields if not recurring
+      updateData.recurrence_pattern = null
+      updateData.recurrence_end_date = null
+      updateData.recurrence_interval = null
+      updateData.recurrence_days_of_week = null
+    }
   }
 
-  console.log('Updating event with data:', updateData)
+  // Add updated_at timestamp
+  updateData.updated_at = new Date().toISOString()
+
+  console.log('Updating event with id:', id)
+  console.log('Update data being sent to Supabase:', updateData)
 
   const { data, error } = await supabase
     .from('events')
@@ -235,17 +274,18 @@ export const updateEvent = async (id: string, updates: Partial<Event>) => {
     .single()
 
   if (error) {
-    console.error('Error updating event:', error)
-    console.error('Update data:', updateData)
+    console.error('Error updating event in Supabase:', error)
+    console.error('Update data that caused error:', updateData)
     console.error('Error details:', {
       code: error.code,
       message: error.message,
-      details: error.details
+      details: error.details,
+      hint: error.hint
     })
     throw error
   }
 
-  console.log('Event updated successfully:', data)
+  console.log('Event updated successfully in Supabase:', data)
   return data
 }
 
