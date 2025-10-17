@@ -4,7 +4,12 @@ import { createClient } from '@supabase/supabase-js'
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+
+// Use service key if available, otherwise use anon key
+const supabase = supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : createClient(supabaseUrl, supabaseAnonKey)
 
 export async function POST() {
   try {
