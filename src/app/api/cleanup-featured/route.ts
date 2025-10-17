@@ -73,7 +73,7 @@ export async function POST() {
     return NextResponse.json({
       message: `Successfully cleaned up ${elapsedEventIds.length} elapsed featured events`,
       cleanedCount: elapsedEventIds.length,
-      cleanedEventIds
+      cleanedEventIds: elapsedEventIds
     })
 
   } catch (error) {
